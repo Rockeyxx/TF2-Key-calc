@@ -77,8 +77,8 @@ if __name__ == "__main__":
     mannco_sar, mannco_usd, mannco_uah = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
     dm_sar, dm_usd, dm_uah = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
 
-    print(f"Mannco: {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_uah} UAH")
-    print(f"DMMarket: {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_uah} UAH")
+    print(f"Mannco (Key price: ${mannco_key_usd}): {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_uah} UAH")
+    print(f"DMMarket (Key price: ${dmarket_key_usd}): {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_uah} UAH")
 
     flagway = input("Choose (0) for game price (1) for keys number: ")
 
@@ -88,13 +88,13 @@ if __name__ == "__main__":
         mannco_sar, mannco_usd, mannco_uah = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
         dm_sar, dm_usd, dm_uah = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
         print(f"\nKeys needed: {NumberOfKeys}")
-        print(f"Mannco: {mannco_sar} SAR | {mannco_usd} USD | {mannco_uah} UAH")
-        print(f"DMMarket: {dm_sar} SAR | {dm_usd} USD | {dm_uah} UAH")
+        print(f"Mannco (Key price: ${mannco_key_usd}): {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_uah} UAH")
+        print(f"DMMarket (Key price: ${dmarket_key_usd}): {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_uah} UAH")
     else:
         NumberOfKeys = int(input("Enter the number of keys: "))
 
         mannco_sar, mannco_usd, mannco_uah = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
         dm_sar, dm_usd, dm_uah = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
-        print(f"\nMannco: {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_uah} UAH")
-        print(f"DMMarket: {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_uah} UAH")
+        print(f"\nMannco (Key price: ${mannco_key_usd}): {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_uah} UAH")
+        print(f"DMMarket (Key price: ${dmarket_key_usd}): {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_uah} UAH")
 
