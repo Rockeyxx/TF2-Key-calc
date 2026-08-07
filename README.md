@@ -20,12 +20,20 @@ A Python utility and web scraper designed for Team Fortress 2 (TF2) key trading 
 
 ---
 
-## ⚡ Quick Start (One-Line Run)
+## Quick Start (One-Line Run)
 
-Run the calculator directly in terminal with a single command (automatically sets up Python virtual environment & dependencies):
+Run the calculator directly in your terminal with a single command (automatically sets up virtual environment & dependencies):
+
+### Linux / macOS:
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/Rockeyxx/TF2-Key-calc/main/run.sh | bash
+```
+
+### Windows (PowerShell):
+
+```powershell
+iwr -useb https://raw.githubusercontent.com/Rockeyxx/TF2-Key-calc/main/run.ps1 | iex
 ```
 
 ---
