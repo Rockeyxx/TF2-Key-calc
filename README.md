@@ -1,34 +1,36 @@
-# 🔑 TF2 Key Price Calculator & Live Scraper
+# TF2 Key Price Calculator & Live Scraper
 
 A Python utility and web scraper designed for Team Fortress 2 (TF2) key trading and Steam wallet conversions. It calculates total purchase costs across key marketplaces (**MannCo.store** and **DMarket**) in **USD** and **SAR (Saudi Riyal)**, and computes the exact **UAH (Ukrainian Hryvnia)** balance you receive in your Steam wallet after Steam market transaction fees.
 
 ---
 
-## ✨ Features
+## Features
 
-- 🕷️ **Automated Live Web Scraping (`Crawlee` & `Playwright`)**:
-  - Automatically fetches real-time TF2 key prices from **MannCo.store** and **DMarket** (sorted by *Lowest Price*).
-  - Fetches live key market prices in Ukrainian Hryvnia directly from **Steam Community Market**.
-  - Includes robust offline fallbacks if a network error occurs.
-- 🧮 **Dual Calculation Modes**:
+- **Automated Live Web Scraping (`Crawlee` & `Playwright`)**:
+- Automatically fetches real-time TF2 key prices from **MannCo.store** and **DMarket** (sorted by _Lowest Price_).
+- Fetches live key market prices in Ukrainian Hryvnia directly from **Steam Community Market**.
+- Includes robust offline fallbacks if a network error occurs.
+- **Dual Calculation Modes**:
   - **By Game Price**: Input a game's price in UAH, and it computes how many keys you need to buy and the cost across stores.
   - **By Key Quantity**: Input the number of keys you want to buy to get a full cost breakdown.
-- 💰 **Accurate Marketplace Fee Modeling**:
-  - **MannCo.store**: Includes baseline percentage and flat transaction fees.
-  - **DMarket**: Includes percentage fee model.
-  - **Steam Market**: Deducts Steam's 15% transaction fee ($1.15$ divisor) to output exact wallet gain in UAH.
+- **Accurate Marketplace Fee Modeling**:
+- **MannCo.store**: Includes baseline percentage and flat transaction fees.
+- **DMarket**: Includes percentage fee model.
+- **Steam Market**: Deducts Steam's 15% transaction fee ($1.15$ divisor) to output exact wallet gain in UAH.
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ### 1. Clone the repository
+
 ```bash
 git clone https://github.com/Rockeyxx/TF2-Key-calc.git
 cd TF2-Key-calc
 ```
 
 ### 2. Set up virtual environment & dependencies
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
@@ -38,7 +40,7 @@ python3 -m playwright install chromium
 
 ---
 
-## 💻 Usage
+## Usage
 
 Run the main calculator script:
 
@@ -47,6 +49,7 @@ python Calc.py
 ```
 
 ### Interactive Output Example:
+
 ```text
 [*] Fetching live TF2 key prices (Steam, MannCo, DMarket)...
 
@@ -65,7 +68,7 @@ DMMarket (Key price: $1.75): 25.95 SAR | 6.92 USD |
 
 ---
 
-## 🧪 Testing
+## Testing
 
 Run the included unit test suite covering key math calculations and price fetcher fallbacks:
 
@@ -75,7 +78,7 @@ python -m unittest test_calc.py test_price_fetcher.py
 
 ---
 
-## 🛠️ Built With
+## Built With
 
 - **[Python 3](https://www.python.org/)** - Core logic
 - **[Crawlee Python](https://crawlee.dev/python)** - High-performance Playwright web scraping

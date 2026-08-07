@@ -76,7 +76,7 @@ async def _scrape_crawlee() -> dict:
     scraped = {}
 
     crawler = PlaywrightCrawler(
-        max_requests_per_crawl=2,
+        max_requests_per_crawl=3,
         request_handler_timeout=timedelta(seconds=15),
         headless=True,
     )
@@ -132,9 +132,22 @@ async def _scrape_crawlee() -> dict:
             except Exception as err:
                 print(f"[!] DMarket crawl notice: {err}")
 
+        elif "steamcommunity.com" in url or "priceoverview" in url:
+            try:
+                body_content = await page.content()
+                match = re.search(r"\"lowest_price\"\s*:\s*\"([^\"]+)\"", body_content) or re.search(r"\"median_price\"\s*:\s*\"([^\"]+)\"", body_content)
+                if match:
+                    raw = match.group(1).replace("₴", "").replace(",", ".").replace(" ", "").strip()
+                    val_match = re.search(r"(\d+(?:\.\d+)?)", raw)
+                    if val_match:
+                        scraped['steam_uah'] = float(val_match.group(1))
+            except Exception as err:
+                print(f"[!] Steam crawl notice: {err}")
+
     await crawler.run([
         "https://mannco.store/item/440-mann-co-supply-crate-key",
-        "https://dmarket.com/ingame-items/item-list/tf2-skins?title=mann%20co.%20supply%20crate%20key"
+        "https://dmarket.com/ingame-items/item-list/tf2-skins?title=mann%20co.%20supply%20crate%20key",
+        "https://steamcommunity.com/market/priceoverview/?appid=440&market_hash_name=Mann%20Co.%20Supply%20Crate%20Key&currency=18"
     ])
 
     return scraped
@@ -145,28 +158,22 @@ def fetch_live_prices() -> dict:
 
     print("[*] Fetching live TF2 key prices (Steam, MannCo, DMarket)...")
 
-    # 1. Fetch Steam Market UAH price
+    # 1. Fetch Steam Market UAH price via httpx API
     try:
         steam_val = asyncio.run(_fetch_steam_price_uah())
         prices['steam_uah'] = steam_val
     except Exception as e:
         print(f"[!] Could not fetch Steam live price: {e}. Using fallback {prices['steam_uah']} UAH.")
 
-    # 2. Try DMarket direct API first for fast lookup
-    try:
-        dm_api_val = asyncio.run(_fetch_dmarket_api())
-        if dm_api_val:
-            prices['dmarket_usd'] = dm_api_val
-    except Exception:
-        pass
-
-    # 3. Crawlee Playwright scrape for MannCo / DMarket if missing
+    # 2. Crawlee Playwright scrape for MannCo, DMarket, and Steam
     try:
         crawlee_results = asyncio.run(_scrape_crawlee())
         if 'mannco_usd' in crawlee_results:
             prices['mannco_usd'] = crawlee_results['mannco_usd']
         if 'dmarket_usd' in crawlee_results:
             prices['dmarket_usd'] = crawlee_results['dmarket_usd']
+        if 'steam_uah' in crawlee_results:
+            prices['steam_uah'] = crawlee_results['steam_uah']
     except Exception as e:
         print(f"[!] Crawlee scrape notice: {e}. Using fallback prices where needed.")
 
