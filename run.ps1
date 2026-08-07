@@ -24,6 +24,51 @@ if ($Uninstall -or $u) {
     exit 0
 }
 
+# --- Find or install Python ---
+function Find-Python {
+    foreach ($candidate in @("py", "python3", "python")) {
+        try {
+            $out = & $candidate --version 2>&1
+            if ($out -match "Python \d") {
+                return $candidate
+            }
+        } catch {}
+    }
+    return $null
+}
+
+$PY = Find-Python
+
+if (-not $PY) {
+    Write-Host "[!] Python not found. Attempting to install via winget..." -ForegroundColor Yellow
+    try {
+        winget install -e --id Python.Python.3.12 --accept-source-agreements --accept-package-agreements
+        # Refresh PATH so the new install is visible
+        $env:PATH = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+        $PY = Find-Python
+    } catch {
+        Write-Host "[!] winget not available." -ForegroundColor Red
+    }
+}
+
+if (-not $PY) {
+    Write-Host ""
+    Write-Host "========================================" -ForegroundColor Red
+    Write-Host "  Python could not be found or installed" -ForegroundColor Red
+    Write-Host "========================================" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Please install Python manually:" -ForegroundColor Yellow
+    Write-Host "  1. Go to https://www.python.org/downloads/" -ForegroundColor Cyan
+    Write-Host "  2. Download and run the installer" -ForegroundColor Cyan
+    Write-Host '  3. CHECK "Add Python to PATH" during install' -ForegroundColor Green
+    Write-Host "  4. Close and reopen PowerShell, then run this script again" -ForegroundColor Cyan
+    Write-Host ""
+    exit 1
+}
+
+Write-Host "[+] Using: $PY ($( & $PY --version 2>&1 ))" -ForegroundColor Green
+
+# --- Download repo if needed ---
 if (-not (Test-Path "Calc.py")) {
     if (-not (Test-Path $TargetDir)) {
         Write-Host "[*] Downloading TF2-Key-calc..." -ForegroundColor Cyan
@@ -40,33 +85,10 @@ if (-not (Test-Path "Calc.py")) {
     }
 }
 
-# Detect the correct Python command (py > python3 > python)
-$PythonCmd = $null
-foreach ($cmd in @("py", "python3", "python")) {
-    try {
-        $found = Get-Command $cmd -ErrorAction SilentlyContinue
-        if ($found) {
-            # Verify it's real Python, not the Windows Store alias
-            $ver = & $cmd --version 2>&1
-            if ($ver -match "Python \d") {
-                $PythonCmd = $cmd
-                break
-            }
-        }
-    } catch {}
-}
-
-if (-not $PythonCmd) {
-    Write-Host "[!] Python is not installed. Please install Python from https://www.python.org/downloads/" -ForegroundColor Red
-    Write-Host "    Make sure to check 'Add Python to PATH' during installation." -ForegroundColor Yellow
-    exit 1
-}
-
-Write-Host "[+] Using Python command: $PythonCmd" -ForegroundColor Green
-
+# --- Setup venv ---
 if (-not (Test-Path ".venv")) {
     Write-Host "[*] Setting up Python virtual environment..." -ForegroundColor Cyan
-    & $PythonCmd -m venv .venv
+    & $PY -m venv .venv
 }
 
 try {
@@ -75,10 +97,10 @@ try {
     $env:PATH = "$(Get-Location)\.venv\Scripts;" + $env:PATH
 }
 
+# --- Install deps & run ---
 Write-Host "[*] Installing Python dependencies..." -ForegroundColor Cyan
-& $PythonCmd -m pip install --quiet "crawlee[playwright]" httpx
-& $PythonCmd -m playwright install chromium
+& $PY -m pip install --quiet "crawlee[playwright]" httpx
+& $PY -m playwright install chromium
 
 Write-Host "[*] Starting TF2 Key Calculator..." -ForegroundColor Green
-& $PythonCmd Calc.py
-
+& $PY Calc.py
