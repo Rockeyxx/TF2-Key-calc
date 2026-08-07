@@ -63,31 +63,54 @@ from price_fetcher import fetch_live_prices
 #1- get the number of keys or do 2
 #2- i give you the game price , the program gives you the the prices from the stores and how much you will gain in steam and how much do you require to spend in ryal
 if __name__ == "__main__":
-    live_prices = fetch_live_prices()
+    SUPPORTED_CURRENCIES = {
+        "1": ("UAH", 18, "₴"),
+        "2": ("USD", 1, "$"),
+        "3": ("EUR", 3, "€"),
+        "4": ("GBP", 2, "£"),
+        "5": ("TRY", 17, "TL"),
+        "6": ("SAR", 32, "SR"),
+        "7": ("RUB", 5, "p")
+    }
+
+    print("Select Steam Wallet Currency:")
+    print(" (1) UAH ₴ [Default]")
+    print(" (2) USD $")
+    print(" (3) EUR €")
+    print(" (4) GBP £")
+    print(" (5) TRY TL")
+    print(" (6) SAR SR")
+    print(" (7) RUB p")
+
+    curr_input = input("Enter choice (1-7) [default: 1]: ").strip()
+    curr_code, curr_id, curr_symbol = SUPPORTED_CURRENCIES.get(curr_input, ("UAH", 18, "₴"))
+
+    live_prices = fetch_live_prices(currency_id=curr_id)
     mannco_key_usd = live_prices['mannco_usd']
     dmarket_key_usd = live_prices['dmarket_usd']
-    steam_key_uah = live_prices['steam_uah']
-    TF2KEY_PRICE = steam_key_uah
+    steam_key_price = live_prices['steam_uah']
+    TF2KEY_PRICE = steam_key_price
 
-    print(f"\n[+] Active Prices Loaded: MannCo ${mannco_key_usd} | DMMarket ${dmarket_key_usd} | Steam {steam_key_uah} UAH\n")
+    print(f"\n[+] Active Prices Loaded: MannCo ${mannco_key_usd} | DMMarket ${dmarket_key_usd} | Steam {steam_key_price} {curr_code}\n")
 
-    NumberOfKeys = 1 #number of key you want to buy
+    NumberOfKeys = 1
 
-    mannco_sar, mannco_usd, mannco_uah = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
-    dm_sar, dm_usd, dm_uah = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
+    mannco_sar, mannco_usd, mannco_steam = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
+    dm_sar, dm_usd, dm_steam = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
+
     flagway = input("Choose (0) for game price (1) for keys number: ")
     if flagway == "0":
-        gameprice = float(input("Enter the game price: "))
+        gameprice = float(input(f"Enter the game price ({curr_code}): "))
         NumberOfKeys = math.ceil(gameprice / TF2KEY_PRICE) 
-        mannco_sar, mannco_usd, mannco_uah = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
-        dm_sar, dm_usd, dm_uah = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
+        mannco_sar, mannco_usd, mannco_steam = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
+        dm_sar, dm_usd, dm_steam = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
         print(f"\nKeys needed: {NumberOfKeys}")
-        print(f"Mannco (Key price: ${mannco_key_usd}): {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_uah} UAH")
-        print(f"DMMarket (Key price: ${dmarket_key_usd}): {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_uah} UAH")
+        print(f"Mannco (Key price: ${mannco_key_usd}): {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_steam} {curr_code}")
+        print(f"DMMarket (Key price: ${dmarket_key_usd}): {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_steam} {curr_code}")
     else:
         NumberOfKeys = int(input("Enter the number of keys: "))
-        mannco_sar, mannco_usd, mannco_uah = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
-        dm_sar, dm_usd, dm_uah = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
-        print(f"\nMannco (Key price: ${mannco_key_usd}): {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_uah} UAH")
-        print(f"DMMarket (Key price: ${dmarket_key_usd}): {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_uah} UAH")
+        mannco_sar, mannco_usd, mannco_steam = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
+        dm_sar, dm_usd, dm_steam = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
+        print(f"\nMannco (Key price: ${mannco_key_usd}): {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_steam} {curr_code}")
+        print(f"DMMarket (Key price: ${dmarket_key_usd}): {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_steam} {curr_code}")
 

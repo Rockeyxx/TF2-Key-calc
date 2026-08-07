@@ -18,13 +18,13 @@ def fetch_fallback_prices() -> dict:
     """Returns fallback static prices."""
     return DEFAULT_PRICES.copy()
 
-async def _fetch_steam_price_uah() -> float:
-    """Fetches the lowest buy order tier price for TF2 Key in Ukrainian Hryvnia dynamically from Steam."""
+async def _fetch_steam_price(currency_id: int = 18) -> float:
+    """Fetches the sell key price for TF2 Key in chosen currency from Steam Market."""
     url = "https://steamcommunity.com/market/itemordershistogram"
     params = {
-        "country": "UA",
+        "country": "US",
         "language": "english",
-        "currency": 18,
+        "currency": currency_id,
         "item_nameid": 1
     }
     headers = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"}
@@ -33,13 +33,17 @@ async def _fetch_steam_price_uah() -> float:
         if res.status_code == 200:
             data = res.json()
             table_html = data.get("buy_order_table", "")
-            match = re.search(r"(\d+(?:\.\d+)?)\s*₴\s*or less", table_html)
-            if match:
-                return float(match.group(1))
+            rows = re.findall(r'<td[^>]*>([^<]+)</td>', table_html)
+            prices = [r.strip() for idx, r in enumerate(rows) if idx % 2 == 0]
+            if prices:
+                raw_str = prices[-1]
+                clean = re.search(r'(\d+(?:[.,]\d+)?)', raw_str.replace(',', '.'))
+                if clean:
+                    return float(clean.group(1))
 
     # Fallback to priceoverview
     url_fallback = "https://steamcommunity.com/market/priceoverview/"
-    params_fallback = {"appid": 440, "market_hash_name": "Mann Co. Supply Crate Key", "currency": 18}
+    params_fallback = {"appid": 440, "market_hash_name": "Mann Co. Supply Crate Key", "currency": currency_id}
     async with httpx.AsyncClient(timeout=8.0) as client:
         res = await client.get(url_fallback, params=params_fallback, headers=headers)
         if res.status_code == 200:
@@ -47,7 +51,7 @@ async def _fetch_steam_price_uah() -> float:
             if data.get("success"):
                 raw_price = data.get("lowest_price", "") or data.get("median_price", "")
                 clean = raw_price.replace("₴", "").replace(",", ".").replace(" ", "").strip()
-                match = re.search(r"(\d+(?:\.\d+)?)", clean)
+                match = re.search(r"(\d+(?:[.,]\d+)?)", clean)
                 if match:
                     return float(match.group(1))
     return DEFAULT_PRICES['steam_uah']
@@ -71,17 +75,16 @@ async def _fetch_dmarket_api() -> float | None:
                 if objects:
                     price_usd = objects[0].get("price", {}).get("USD", "")
                     if price_usd:
-                        # Price is often in cents (e.g. "165")
                         val = float(price_usd)
-                        if val > 50: # if in cents
+                        if val > 50:
                             val = val / 100.0
                         return round(val, 2)
     except Exception:
         pass
     return None
 
-async def _scrape_crawlee() -> dict:
-    """Uses Crawlee PlaywrightCrawler to extract live prices from MannCo and DMarket."""
+async def _scrape_crawlee(currency_id: int = 18) -> dict:
+    """Uses Crawlee PlaywrightCrawler to extract live prices from MannCo, DMarket, and Steam."""
     if not CRAWLEE_AVAILABLE:
         print("[!] Notice: Crawlee module not installed in current Python environment. Using fallback prices.")
         return {}
@@ -101,7 +104,6 @@ async def _scrape_crawlee() -> dict:
 
         if "mannco.store" in url:
             try:
-                # Wait for price element on page
                 elem = await page.wait_for_selector(".price, [class*='price']", timeout=6000)
                 if elem:
                     text = await elem.inner_text()
@@ -148,39 +150,40 @@ async def _scrape_crawlee() -> dict:
         elif "steamcommunity.com" in url or "itemordershistogram" in url:
             try:
                 body_content = await page.content()
-                match = re.search(r"(\d+(?:\.\d+)?)\s*₴\s*or less", body_content) or re.search(r"\"lowest_price\"\s*:\s*\"([^\"]+)\"", body_content)
-                if match:
-                    raw = match.group(1).replace("₴", "").replace(",", ".").replace(" ", "").strip()
-                    val_match = re.search(r"(\d+(?:\.\d+)?)", raw)
-                    if val_match:
-                        scraped['steam_uah'] = float(val_match.group(1))
+                rows = re.findall(r'<td[^>]*>([^<]+)</td>', body_content)
+                prices = [r.strip() for idx, r in enumerate(rows) if idx % 2 == 0]
+                if prices:
+                    raw_str = prices[-1]
+                    clean = re.search(r'(\d+(?:[.,]\d+)?)', raw_str.replace(',', '.'))
+                    if clean:
+                        scraped['steam_uah'] = float(clean.group(1))
             except Exception as err:
                 print(f"[!] Steam crawl notice: {err}")
 
     await crawler.run([
         "https://mannco.store/item/440-mann-co-supply-crate-key",
         "https://dmarket.com/ingame-items/item-list/tf2-skins?title=mann%20co.%20supply%20crate%20key",
-        "https://steamcommunity.com/market/itemordershistogram?country=UA&language=english&currency=18&item_nameid=1"
+        f"https://steamcommunity.com/market/itemordershistogram?country=US&language=english&currency={currency_id}&item_nameid=1"
     ])
 
     return scraped
 
-def fetch_live_prices() -> dict:
+def fetch_live_prices(currency_id: int = 18) -> dict:
     """Fetches live market prices with fallbacks on failure."""
     prices = fetch_fallback_prices()
 
     print("[*] Fetching live TF2 key prices (Steam, MannCo, DMarket)...")
 
-    # 1. Fetch Steam Market UAH price via httpx API
+    # 1. Fetch Steam Market price via httpx API
     try:
-        steam_val = asyncio.run(_fetch_steam_price_uah())
+        steam_val = asyncio.run(_fetch_steam_price(currency_id=currency_id))
         prices['steam_uah'] = steam_val
     except Exception as e:
-        print(f"[!] Could not fetch Steam live price: {e}. Using fallback {prices['steam_uah']} UAH.")
+        print(f"[!] Could not fetch Steam live price: {e}. Using fallback {prices['steam_uah']}.")
 
     # 2. Crawlee Playwright scrape for MannCo, DMarket, and Steam
     try:
-        crawlee_results = asyncio.run(_scrape_crawlee())
+        crawlee_results = asyncio.run(_scrape_crawlee(currency_id=currency_id))
         if 'mannco_usd' in crawlee_results:
             prices['mannco_usd'] = crawlee_results['mannco_usd']
         if 'dmarket_usd' in crawlee_results:
