@@ -4,6 +4,25 @@ set -e
 REPO_URL="https://github.com/Rockeyxx/TF2-Key-calc.git"
 TARGET_DIR="TF2-Key-calc"
 
+# Check for uninstall flag
+if [ "$1" = "--uninstall" ] || [ "$1" = "-u" ]; then
+    echo "[*] Uninstalling TF2 Key Calculator setup..."
+    if [ -d ".venv" ]; then
+        echo " -> Removing virtual environment (.venv)..."
+        rm -rf .venv
+    fi
+    if [ -f "prices_cache.json" ]; then
+        echo " -> Removing cached prices (prices_cache.json)..."
+        rm -f prices_cache.json
+    fi
+    if [ -d "storage" ]; then
+        echo " -> Removing Crawlee storage directory..."
+        rm -rf storage
+    fi
+    echo "[+] Cleanup completed successfully."
+    exit 0
+fi
+
 # 1. If not already inside the project folder, clone or enter it
 if [ ! -f "Calc.py" ]; then
     if [ ! -d "$TARGET_DIR" ]; then

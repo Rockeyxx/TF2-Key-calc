@@ -1,6 +1,29 @@
+param(
+    [switch]$Uninstall,
+    [switch]$u
+)
+
 $ErrorActionPreference = "Stop"
 $RepoUrl = "https://github.com/Rockeyxx/TF2-Key-calc.git"
 $TargetDir = "TF2-Key-calc"
+
+if ($Uninstall -or $u) {
+    Write-Host "[*] Uninstalling TF2 Key Calculator setup..." -ForegroundColor Yellow
+    if (Test-Path ".venv") {
+        Write-Host " -> Removing virtual environment (.venv)..." -ForegroundColor Yellow
+        Remove-Item -Recurse -Force ".venv"
+    }
+    if (Test-Path "prices_cache.json") {
+        Write-Host " -> Removing cached prices (prices_cache.json)..." -ForegroundColor Yellow
+        Remove-Item -Force "prices_cache.json"
+    }
+    if (Test-Path "storage") {
+        Write-Host " -> Removing Crawlee storage directory..." -ForegroundColor Yellow
+        Remove-Item -Recurse -Force "storage"
+    }
+    Write-Host "[+] Cleanup completed successfully." -ForegroundColor Green
+    exit 0
+}
 
 if (-not (Test-Path "Calc.py")) {
     if (-not (Test-Path $TargetDir)) {
@@ -18,7 +41,6 @@ if (-not (Test-Path ".venv")) {
 try {
     & .\.venv\Scripts\Activate.ps1
 } catch {
-    # If PowerShell script execution policy restricts activation script
     $env:PATH = "$(Get-Location)\.venv\Scripts;" + $env:PATH
 }
 

@@ -36,6 +36,13 @@ curl -sSL https://raw.githubusercontent.com/Rockeyxx/TF2-Key-calc/main/run.sh | 
 iwr -useb https://raw.githubusercontent.com/Rockeyxx/TF2-Key-calc/main/run.ps1 | iex
 ```
 
+### Uninstalling / Cleanup
+
+To clean up the virtual environment, cached prices, and storage:
+
+- **Linux / macOS:** `./run.sh --uninstall`
+- **Windows (PowerShell):** `.\run.ps1 -Uninstall`
+
 ---
 
 ## Manual Installation
