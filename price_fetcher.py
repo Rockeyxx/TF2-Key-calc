@@ -100,7 +100,7 @@ async def _scrape_crawlee() -> dict:
 
         elif "dmarket.com" in url:
             try:
-                elem = await page.wait_for_selector("[class*='price']", timeout=6000)
+                elem = await page.wait_for_selector("asset-card-price, .c-assetCard__price, [class*='assetCard'] [class*='price'], .price-value", timeout=10000)
                 if elem:
                     text = await elem.inner_text()
                     match = re.search(r"\$?(\d+\.\d{2})", text)
@@ -142,7 +142,7 @@ def fetch_live_prices() -> dict:
         crawlee_results = asyncio.run(_scrape_crawlee())
         if 'mannco_usd' in crawlee_results:
             prices['mannco_usd'] = crawlee_results['mannco_usd']
-        if 'dmarket_usd' in crawlee_results and 'dmarket_usd' not in prices:
+        if 'dmarket_usd' in crawlee_results:
             prices['dmarket_usd'] = crawlee_results['dmarket_usd']
     except Exception as e:
         print(f"[!] Crawlee scrape notice: {e}. Using fallback prices where needed.")
