@@ -19,16 +19,29 @@ def fetch_fallback_prices() -> dict:
     return DEFAULT_PRICES.copy()
 
 async def _fetch_steam_price_uah() -> float:
-    """Fetches the lowest market sell price for TF2 Key in Ukrainian Hryvnia from Steam."""
-    url = "https://steamcommunity.com/market/priceoverview/"
+    """Fetches the lowest buy order tier price for TF2 Key in Ukrainian Hryvnia dynamically from Steam."""
+    url = "https://steamcommunity.com/market/itemordershistogram"
     params = {
-        "appid": 440,
-        "market_hash_name": "Mann Co. Supply Crate Key",
-        "currency": 18
+        "country": "UA",
+        "language": "english",
+        "currency": 18,
+        "item_nameid": 1
     }
     headers = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"}
     async with httpx.AsyncClient(timeout=8.0) as client:
         res = await client.get(url, params=params, headers=headers)
+        if res.status_code == 200:
+            data = res.json()
+            table_html = data.get("buy_order_table", "")
+            match = re.search(r"(\d+(?:\.\d+)?)\s*₴\s*or less", table_html)
+            if match:
+                return float(match.group(1))
+
+    # Fallback to priceoverview
+    url_fallback = "https://steamcommunity.com/market/priceoverview/"
+    params_fallback = {"appid": 440, "market_hash_name": "Mann Co. Supply Crate Key", "currency": 18}
+    async with httpx.AsyncClient(timeout=8.0) as client:
+        res = await client.get(url_fallback, params=params_fallback, headers=headers)
         if res.status_code == 200:
             data = res.json()
             if data.get("success"):
@@ -132,10 +145,10 @@ async def _scrape_crawlee() -> dict:
             except Exception as err:
                 print(f"[!] DMarket crawl notice: {err}")
 
-        elif "steamcommunity.com" in url or "priceoverview" in url:
+        elif "steamcommunity.com" in url or "itemordershistogram" in url:
             try:
                 body_content = await page.content()
-                match = re.search(r"\"lowest_price\"\s*:\s*\"([^\"]+)\"", body_content) or re.search(r"\"median_price\"\s*:\s*\"([^\"]+)\"", body_content)
+                match = re.search(r"(\d+(?:\.\d+)?)\s*₴\s*or less", body_content) or re.search(r"\"lowest_price\"\s*:\s*\"([^\"]+)\"", body_content)
                 if match:
                     raw = match.group(1).replace("₴", "").replace(",", ".").replace(" ", "").strip()
                     val_match = re.search(r"(\d+(?:\.\d+)?)", raw)
@@ -147,7 +160,7 @@ async def _scrape_crawlee() -> dict:
     await crawler.run([
         "https://mannco.store/item/440-mann-co-supply-crate-key",
         "https://dmarket.com/ingame-items/item-list/tf2-skins?title=mann%20co.%20supply%20crate%20key",
-        "https://steamcommunity.com/market/priceoverview/?appid=440&market_hash_name=Mann%20Co.%20Supply%20Crate%20Key&currency=18"
+        "https://steamcommunity.com/market/itemordershistogram?country=UA&language=english&currency=18&item_nameid=1"
     ])
 
     return scraped
