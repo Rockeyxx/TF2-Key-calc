@@ -1,34 +1,5 @@
 #Calculation the vlaue of tf2 key price from website and then the sell price in steam and the actual value you got to your account so you convert from ukraine to ryal saudi
 import math
-import requests
-# def get_steam_price_uah():
-#     """Fetches the lowest market price for a TF2 Key in Ukrainian Hryvnia (Currency 18)."""
-#     url = "https://steamcommunity.com/market/priceoverview/"
-#     params = {
-#         "appid": 440,
-#         "market_hash_name": "Mann Co. Supply Crate Key",
-#         "currency": 18
-#     }
-#     # A standard User-Agent prevents basic HTTP 403 blocks from Steam's edge nodes
-#     headers = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"}
-    
-#     try:
-#         response = requests.get(url, params=params, headers=headers, timeout=5)
-#         response.raise_for_status()
-#         data = response.json()
-        
-#         if data.get("success"):
-#             # The API returns localized strings (e.g., "100,50₴"). 
-#             # We must sanitize the string to cast it to a floating-point number.
-#             raw_price = data.get("lowest_price", "0")
-#             clean_price = raw_price.replace("₴", "").replace(",", ".").replace(" ", "")
-#             return float(clean_price)
-            
-#     except requests.RequestException as e:
-#         print(f"[!] Steam API Error: {e}")
-        
-#     return 101.00 # Fallback constant
-
 
 USD_TO_UAH = 41.5
 USD_TO_SAR = 3.75
