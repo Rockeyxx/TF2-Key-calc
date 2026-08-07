@@ -72,16 +72,10 @@ if __name__ == "__main__":
     print(f"\n[+] Active Prices Loaded: MannCo ${mannco_key_usd} | DMMarket ${dmarket_key_usd} | Steam {steam_key_uah} UAH\n")
 
     NumberOfKeys = 1 #number of key you want to buy
-    print(f"Number of keys ={NumberOfKeys}\n")
 
     mannco_sar, mannco_usd, mannco_uah = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
     dm_sar, dm_usd, dm_uah = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
-
-    print(f"Mannco (Key price: ${mannco_key_usd}): {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_uah} UAH")
-    print(f"DMMarket (Key price: ${dmarket_key_usd}): {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_uah} UAH")
-
     flagway = input("Choose (0) for game price (1) for keys number: ")
-
     if flagway == "0":
         gameprice = float(input("Enter the game price: "))
         NumberOfKeys = math.ceil(gameprice / TF2KEY_PRICE) 
@@ -92,7 +86,6 @@ if __name__ == "__main__":
         print(f"DMMarket (Key price: ${dmarket_key_usd}): {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_uah} UAH")
     else:
         NumberOfKeys = int(input("Enter the number of keys: "))
-
         mannco_sar, mannco_usd, mannco_uah = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
         dm_sar, dm_usd, dm_uah = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
         print(f"\nMannco (Key price: ${mannco_key_usd}): {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_uah} UAH")
