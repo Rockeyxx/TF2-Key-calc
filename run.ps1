@@ -3,9 +3,8 @@ param(
     [switch]$u
 )
 
-$ErrorActionPreference = "Stop"
-$RepoUrl = "https://github.com/Rockeyxx/TF2-Key-calc.git"
 $TargetDir = "TF2-Key-calc"
+$ZipUrl = "https://github.com/Rockeyxx/TF2-Key-calc/archive/refs/heads/main.zip"
 
 if ($Uninstall -or $u) {
     Write-Host "[*] Uninstalling TF2 Key Calculator setup..." -ForegroundColor Yellow
@@ -27,26 +26,13 @@ if ($Uninstall -or $u) {
 
 if (-not (Test-Path "Calc.py")) {
     if (-not (Test-Path $TargetDir)) {
-        $hasGit = $false
-        try {
-            $cmd = Get-Command "git" -ErrorAction SilentlyContinue
-            if ($cmd) { $hasGit = $true }
-        } catch {
-            $hasGit = $false
-        }
-
-        if ($hasGit) {
-            Write-Host "[*] Cloning TF2-Key-calc repository using git..." -ForegroundColor Cyan
-            git clone $RepoUrl $TargetDir
-        } else {
-            Write-Host "[*] Git not found. Downloading repository ZIP archive..." -ForegroundColor Cyan
-            $ZipPath = "$env:TEMP\TF2-Key-calc-main.zip"
-            Invoke-WebRequest -Uri "https://github.com/Rockeyxx/TF2-Key-calc/archive/refs/heads/main.zip" -OutFile $ZipPath
-            Expand-Archive -Path $ZipPath -DestinationPath "." -Force
-            Remove-Item -Force $ZipPath
-            if (Test-Path "TF2-Key-calc-main") {
-                Rename-Item -Path "TF2-Key-calc-main" -NewName $TargetDir
-            }
+        Write-Host "[*] Downloading TF2-Key-calc..." -ForegroundColor Cyan
+        $ZipPath = Join-Path $env:TEMP "TF2-Key-calc-main.zip"
+        Invoke-WebRequest -Uri $ZipUrl -OutFile $ZipPath -UseBasicParsing
+        Expand-Archive -Path $ZipPath -DestinationPath "." -Force
+        Remove-Item -Force $ZipPath
+        if (Test-Path "TF2-Key-calc-main") {
+            Rename-Item -Path "TF2-Key-calc-main" -NewName $TargetDir
         }
     }
     if (Test-Path $TargetDir) {
