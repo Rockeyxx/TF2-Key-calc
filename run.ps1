@@ -40,9 +40,33 @@ if (-not (Test-Path "Calc.py")) {
     }
 }
 
+# Detect the correct Python command (py > python3 > python)
+$PythonCmd = $null
+foreach ($cmd in @("py", "python3", "python")) {
+    try {
+        $found = Get-Command $cmd -ErrorAction SilentlyContinue
+        if ($found) {
+            # Verify it's real Python, not the Windows Store alias
+            $ver = & $cmd --version 2>&1
+            if ($ver -match "Python \d") {
+                $PythonCmd = $cmd
+                break
+            }
+        }
+    } catch {}
+}
+
+if (-not $PythonCmd) {
+    Write-Host "[!] Python is not installed. Please install Python from https://www.python.org/downloads/" -ForegroundColor Red
+    Write-Host "    Make sure to check 'Add Python to PATH' during installation." -ForegroundColor Yellow
+    exit 1
+}
+
+Write-Host "[+] Using Python command: $PythonCmd" -ForegroundColor Green
+
 if (-not (Test-Path ".venv")) {
     Write-Host "[*] Setting up Python virtual environment..." -ForegroundColor Cyan
-    python -m venv .venv
+    & $PythonCmd -m venv .venv
 }
 
 try {
@@ -52,8 +76,9 @@ try {
 }
 
 Write-Host "[*] Installing Python dependencies..." -ForegroundColor Cyan
-python -m pip install --quiet "crawlee[playwright]" httpx
-python -m playwright install chromium
+& $PythonCmd -m pip install --quiet "crawlee[playwright]" httpx
+& $PythonCmd -m playwright install chromium
 
 Write-Host "[*] Starting TF2 Key Calculator..." -ForegroundColor Green
-python Calc.py
+& $PythonCmd Calc.py
+
