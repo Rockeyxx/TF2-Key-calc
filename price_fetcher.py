@@ -2,7 +2,11 @@ from datetime import timedelta
 import asyncio
 import re
 import httpx
-from crawlee.crawlers import PlaywrightCrawler, PlaywrightCrawlingContext
+try:
+    from crawlee.crawlers import PlaywrightCrawler, PlaywrightCrawlingContext
+    CRAWLEE_AVAILABLE = True
+except ImportError:
+    CRAWLEE_AVAILABLE = False
 
 DEFAULT_PRICES = {
     'mannco_usd': 1.73,
@@ -65,6 +69,10 @@ async def _fetch_dmarket_api() -> float | None:
 
 async def _scrape_crawlee() -> dict:
     """Uses Crawlee PlaywrightCrawler to extract live prices from MannCo and DMarket."""
+    if not CRAWLEE_AVAILABLE:
+        print("[!] Notice: Crawlee module not installed in current Python environment. Using fallback prices.")
+        return {}
+
     scraped = {}
 
     crawler = PlaywrightCrawler(
