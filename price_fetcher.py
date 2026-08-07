@@ -8,6 +8,12 @@ try:
 except ImportError:
     CRAWLEE_AVAILABLE = False
 
+import json
+import os
+from datetime import datetime
+
+CACHE_FILE_PATH = os.path.join(os.path.dirname(__file__), "prices_cache.json")
+
 DEFAULT_PRICES = {
     'mannco_usd': 1.73,
     'dmarket_usd': 1.63,
@@ -17,6 +23,30 @@ DEFAULT_PRICES = {
 def fetch_fallback_prices() -> dict:
     """Returns fallback static prices."""
     return DEFAULT_PRICES.copy()
+
+def load_cached_prices(cache_path: str = CACHE_FILE_PATH) -> dict | None:
+    """Loads cached prices from JSON file if available."""
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return None
+    return None
+
+def save_cached_prices(prices: dict, currency_code: str = "UAH", currency_id: int = 18, cache_path: str = CACHE_FILE_PATH) -> None:
+    """Saves fetched prices to JSON cache file."""
+    data = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "currency_code": currency_code,
+        "currency_id": currency_id,
+        "prices": prices
+    }
+    try:
+        with open(cache_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        print(f"[!] Notice: Could not save cache: {e}")
 
 async def _fetch_steam_price(currency_id: int = 18) -> float:
     """Fetches the sell key price for TF2 Key in chosen currency from Steam Market."""

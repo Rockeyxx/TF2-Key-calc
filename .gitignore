@@ -5,3 +5,4 @@ __pycache__/
 .superpowers/
 storage/
 docs/
+prices_cache.json
