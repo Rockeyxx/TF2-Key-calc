@@ -98,7 +98,7 @@ if __name__ == "__main__":
     mannco_sar, mannco_usd, mannco_steam = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
     dm_sar, dm_usd, dm_steam = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
 
-    flagway = input("Choose (0) for game price (1) for keys number: ")
+    flagway = input("Choose (0) for game price (1) for keys number: ").strip()
     if flagway == "0":
         gameprice = float(input(f"Enter the game price ({curr_code}): "))
         net_steam_per_key = TF2KEY_PRICE / STEAM_FEE
