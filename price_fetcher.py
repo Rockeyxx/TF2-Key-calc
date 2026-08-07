@@ -100,6 +100,29 @@ async def _scrape_crawlee() -> dict:
 
         elif "dmarket.com" in url:
             try:
+                await page.set_viewport_size({'width': 1920, 'height': 1080})
+                await page.wait_for_timeout(3000)
+                
+                # Open sort dropdown and select 'Price: Lowest First'
+                await page.evaluate('''() => {
+                    const btn = document.querySelector('.mat-mdc-menu-trigger, .o-select__sort');
+                    if (btn) btn.click();
+                }''')
+                await page.wait_for_timeout(1000)
+                
+                await page.evaluate('''() => {
+                    const fields = Array.from(document.querySelectorAll('.mdc-form-field, mat-radio-button, mat-option, label, div'));
+                    for (const f of fields) {
+                        if (f.innerText && f.innerText.trim() === 'Price: Lowest First') {
+                            const target = f.querySelector('input, label') || f;
+                            target.click();
+                            return true;
+                        }
+                    }
+                    return false;
+                }''')
+                await page.wait_for_timeout(3000)
+
                 elem = await page.wait_for_selector("asset-card-price, .c-assetCard__price, [class*='assetCard'] [class*='price'], .price-value", timeout=10000)
                 if elem:
                     text = await elem.inner_text()
