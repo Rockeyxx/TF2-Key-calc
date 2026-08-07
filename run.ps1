@@ -27,7 +27,15 @@ if ($Uninstall -or $u) {
 
 if (-not (Test-Path "Calc.py")) {
     if (-not (Test-Path $TargetDir)) {
-        if (Get-Command git -ErrorAction SilentlyContinue) {
+        $hasGit = $false
+        try {
+            $cmd = Get-Command "git" -ErrorAction SilentlyContinue
+            if ($cmd) { $hasGit = $true }
+        } catch {
+            $hasGit = $false
+        }
+
+        if ($hasGit) {
             Write-Host "[*] Cloning TF2-Key-calc repository using git..." -ForegroundColor Cyan
             git clone $RepoUrl $TargetDir
         } else {
