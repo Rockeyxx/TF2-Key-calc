@@ -26,8 +26,16 @@ fi
 # 1. If not already inside the project folder, clone or enter it
 if [ ! -f "Calc.py" ]; then
     if [ ! -d "$TARGET_DIR" ]; then
-        echo "[*] Cloning TF2-Key-calc repository..."
-        git clone "$REPO_URL" "$TARGET_DIR"
+        if command -v git >/dev/null 2>&1; then
+            echo "[*] Cloning TF2-Key-calc repository..."
+            git clone "$REPO_URL" "$TARGET_DIR"
+        else
+            echo "[*] Git not found. Downloading repository ZIP archive..."
+            curl -sSL "https://github.com/Rockeyxx/TF2-Key-calc/archive/refs/heads/main.zip" -o main.zip
+            unzip -q main.zip
+            rm -f main.zip
+            mv TF2-Key-calc-main "$TARGET_DIR"
+        fi
     fi
     cd "$TARGET_DIR"
 fi

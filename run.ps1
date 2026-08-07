@@ -27,10 +27,23 @@ if ($Uninstall -or $u) {
 
 if (-not (Test-Path "Calc.py")) {
     if (-not (Test-Path $TargetDir)) {
-        Write-Host "[*] Cloning TF2-Key-calc repository..." -ForegroundColor Cyan
-        git clone $RepoUrl $TargetDir
+        if (Get-Command git -ErrorAction SilentlyContinue) {
+            Write-Host "[*] Cloning TF2-Key-calc repository using git..." -ForegroundColor Cyan
+            git clone $RepoUrl $TargetDir
+        } else {
+            Write-Host "[*] Git not found. Downloading repository ZIP archive..." -ForegroundColor Cyan
+            $ZipPath = "$env:TEMP\TF2-Key-calc-main.zip"
+            Invoke-WebRequest -Uri "https://github.com/Rockeyxx/TF2-Key-calc/archive/refs/heads/main.zip" -OutFile $ZipPath
+            Expand-Archive -Path $ZipPath -DestinationPath "." -Force
+            Remove-Item -Force $ZipPath
+            if (Test-Path "TF2-Key-calc-main") {
+                Rename-Item -Path "TF2-Key-calc-main" -NewName $TargetDir
+            }
+        }
     }
-    Set-Location $TargetDir
+    if (Test-Path $TargetDir) {
+        Set-Location $TargetDir
+    }
 }
 
 if (-not (Test-Path ".venv")) {
