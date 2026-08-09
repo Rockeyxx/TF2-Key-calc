@@ -1,8 +1,18 @@
 #Calculation the vlaue of tf2 key price from website and then the sell price in steam and the actual value you got to your account so you convert from ukraine to ryal saudi
 import math
+import sys
 
 USD_TO_UAH = 41.5
 USD_TO_SAR = 3.75
+
+def _ensure_interactive_stdin():
+    """If standard input is piped (e.g. curl ... | bash), reconnect sys.stdin to the controlling terminal."""
+    if not sys.stdin.isatty():
+        try:
+            tty_path = 'CON' if sys.platform == 'win32' else '/dev/tty'
+            sys.stdin = open(tty_path, 'r')
+        except Exception:
+            pass
 
 # Steam section
 TF2KEY_PRICE = 99 #get_steam_price_uah() #UKRAININ 
@@ -34,6 +44,7 @@ from price_fetcher import fetch_live_prices, load_cached_prices, save_cached_pri
 #1- get the number of keys or do 2
 #2- i give you the game price , the program gives you the the prices from the stores and how much you will gain in steam and how much do you require to spend in ryal
 if __name__ == "__main__":
+    _ensure_interactive_stdin()
     SUPPORTED_CURRENCIES = {
         "1": ("UAH", 18, "₴"),
         "2": ("USD", 1, "$"),

@@ -27,6 +27,10 @@ Run the calculator directly in your terminal with a single command (automaticall
 ### Linux / macOS:
 
 ```bash
+bash <(curl -sSL https://raw.githubusercontent.com/Rockeyxx/TF2-Key-calc/main/run.sh)
+```
+or:
+```bash
 curl -sSL https://raw.githubusercontent.com/Rockeyxx/TF2-Key-calc/main/run.sh | bash
 ```
 
