@@ -44,68 +44,72 @@ if __name__ == "__main__":
         "7": ("RUB", 5, "p")
     }
 
-    print("Select Steam Wallet Currency:")
-    print(" (1) UAH ₴ [Default]")
-    print(" (2) USD $")
-    print(" (3) EUR €")
-    print(" (4) GBP £")
-    print(" (5) TRY TL")
-    print(" (6) SAR SR")
-    print(" (7) RUB p")
+    try:
+        print("Select Steam Wallet Currency:")
+        print(" (1) UAH ₴ [Default]")
+        print(" (2) USD $")
+        print(" (3) EUR €")
+        print(" (4) GBP £")
+        print(" (5) TRY TL")
+        print(" (6) SAR SR")
+        print(" (7) RUB p")
 
-    curr_input = input("Enter choice (1-7) [default: 1]: ").strip()
-    curr_code, curr_id, curr_symbol = SUPPORTED_CURRENCIES.get(curr_input, ("UAH", 18, "₴"))
+        curr_input = input("Enter choice (1-7) [default: 1]: ").strip()
+        curr_code, curr_id, curr_symbol = SUPPORTED_CURRENCIES.get(curr_input, ("UAH", 18, "₴"))
 
-    cached_data = load_cached_prices()
-    use_cache = False
+        cached_data = load_cached_prices()
+        use_cache = False
 
-    if cached_data and cached_data.get("currency_id") == curr_id:
-        cache_ts = cached_data.get("timestamp", "unknown time")
-        cache_prices = cached_data.get("prices", {})
-        print(f"\n[i] Found cached prices from {cache_ts}:")
-        print(f"    MannCo: ${cache_prices.get('mannco_usd')} | DMarket: ${cache_prices.get('dmarket_usd')} | Steam: {cache_prices.get('steam_uah')} {curr_code}")
-        refetch_ans = input("Re-fetch live prices from web? (y/N): ").strip().lower()
-        if refetch_ans not in ["y", "yes"]:
-            use_cache = True
-            live_prices = cache_prices
+        if cached_data and cached_data.get("currency_id") == curr_id:
+            cache_ts = cached_data.get("timestamp", "unknown time")
+            cache_prices = cached_data.get("prices", {})
+            print(f"\n[i] Found cached prices from {cache_ts}:")
+            print(f"    MannCo: ${cache_prices.get('mannco_usd')} | DMarket: ${cache_prices.get('dmarket_usd')} | Steam: {cache_prices.get('steam_uah')} {curr_code}")
+            refetch_ans = input("Re-fetch live prices from web? (y/N): ").strip().lower()
+            if refetch_ans not in ["y", "yes"]:
+                use_cache = True
+                live_prices = cache_prices
 
-    if not use_cache:
-        live_prices = fetch_live_prices(currency_id=curr_id)
-        save_cached_prices(live_prices, currency_code=curr_code, currency_id=curr_id)
+        if not use_cache:
+            live_prices = fetch_live_prices(currency_id=curr_id)
+            save_cached_prices(live_prices, currency_code=curr_code, currency_id=curr_id)
 
-    mannco_key_usd = live_prices['mannco_usd']
-    dmarket_key_usd = live_prices['dmarket_usd']
-    steam_key_price = live_prices['steam_uah']
-    TF2KEY_PRICE = steam_key_price
+        mannco_key_usd = live_prices['mannco_usd']
+        dmarket_key_usd = live_prices['dmarket_usd']
+        steam_key_price = live_prices['steam_uah']
+        TF2KEY_PRICE = steam_key_price
 
-    print(f"\n[+] Active Prices Loaded: MannCo ${mannco_key_usd} | DMMarket ${dmarket_key_usd} | Steam {steam_key_price} {curr_code}\n")
+        print(f"\n[+] Active Prices Loaded: MannCo ${mannco_key_usd} | DMMarket ${dmarket_key_usd} | Steam {steam_key_price} {curr_code}\n")
 
-    while True:
-        flagway = input("Choose (0) for game price (1) for keys number (q to quit): ").strip().lower()
-        if flagway in ["q", "quit", "exit"]:
-            print("Exiting calculator.")
-            break
-        elif flagway == "0":
-            try:
-                gameprice = float(input(f"Enter the game price ({curr_code}): "))
-                net_steam_per_key = TF2KEY_PRICE / STEAM_FEE
-                NumberOfKeys = math.ceil(gameprice / net_steam_per_key) 
-                mannco_sar, mannco_usd, mannco_steam = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
-                dm_sar, dm_usd, dm_steam = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
-                print(f"\nKeys needed: {NumberOfKeys}")
-                print(f"Mannco (Key price: ${mannco_key_usd}): {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_steam} {curr_code}")
-                print(f"DMMarket (Key price: ${dmarket_key_usd}): {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_steam} {curr_code}\n")
-            except ValueError:
-                print("[!] Invalid price input. Please enter a valid number.\n")
-        elif flagway == "1":
-            try:
-                NumberOfKeys = int(input("Enter the number of keys: "))
-                mannco_sar, mannco_usd, mannco_steam = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
-                dm_sar, dm_usd, dm_steam = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
-                print(f"\nMannco (Key price: ${mannco_key_usd}): {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_steam} {curr_code}")
-                print(f"DMMarket (Key price: ${dmarket_key_usd}): {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_steam} {curr_code}\n")
-            except ValueError:
-                print("[!] Invalid number of keys. Please enter a valid integer.\n")
-        else:
-            print("[!] Invalid choice. Please select 0, 1, or q.\n")
+        while True:
+            flagway = input("Choose (0) for game price (1) for keys number (q to quit): ").strip().lower()
+            if flagway in ["q", "quit", "exit"]:
+                print("Exiting calculator.")
+                break
+            elif flagway == "0":
+                try:
+                    gameprice = float(input(f"Enter the game price ({curr_code}): "))
+                    net_steam_per_key = TF2KEY_PRICE / STEAM_FEE
+                    NumberOfKeys = math.ceil(gameprice / net_steam_per_key) 
+                    mannco_sar, mannco_usd, mannco_steam = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
+                    dm_sar, dm_usd, dm_steam = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
+                    print(f"\nKeys needed: {NumberOfKeys}")
+                    print(f"Mannco (Key price: ${mannco_key_usd}): {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_steam} {curr_code}")
+                    print(f"DMMarket (Key price: ${dmarket_key_usd}): {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_steam} {curr_code}\n")
+                except ValueError:
+                    print("[!] Invalid price input. Please enter a valid number.\n")
+            elif flagway == "1":
+                try:
+                    NumberOfKeys = int(input("Enter the number of keys: "))
+                    mannco_sar, mannco_usd, mannco_steam = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
+                    dm_sar, dm_usd, dm_steam = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
+                    print(f"\nMannco (Key price: ${mannco_key_usd}): {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_steam} {curr_code}")
+                    print(f"DMMarket (Key price: ${dmarket_key_usd}): {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_steam} {curr_code}\n")
+                except ValueError:
+                    print("[!] Invalid number of keys. Please enter a valid integer.\n")
+            else:
+                print("[!] Invalid choice. Please select 0, 1, or q.\n")
+    except (EOFError, KeyboardInterrupt):
+        print("\n\n[i] Session ended.")
+
 

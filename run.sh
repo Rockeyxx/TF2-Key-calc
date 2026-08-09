@@ -57,4 +57,8 @@ python3 -m playwright install chromium > /dev/null 2>&1 || python3 -m playwright
 
 # 5. Run calculator
 echo "[*] Starting TF2 Key Calculator..."
+if [ ! -t 0 ] && [ -c /dev/tty ]; then
+    exec < /dev/tty 2>/dev/null || true
+fi
 python3 Calc.py
+
