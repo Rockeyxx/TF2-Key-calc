@@ -94,17 +94,6 @@ Mannco (Key price: $1.77): 28.5 SAR | 7.6 USD |
 DMMarket (Key price: $1.75): 25.95 SAR | 6.92 USD |
  you will get in steam account 347.83 UAH
 ```
-
----
-
-## Testing
-
-Run the included unit test suite covering key math calculations and price fetcher fallbacks:
-
-```bash
-python -m unittest test_calc.py test_price_fetcher.py
-```
-
 ---
 
 ## Built With
