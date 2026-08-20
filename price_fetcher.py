@@ -87,13 +87,18 @@ async def _fetch_steam_price(currency_id: int = 18) -> float:
     return DEFAULT_PRICES['steam_uah']
 
 async def _fetch_dmarket_api() -> float | None:
-    """Tries fetching price directly from DMarket public items API."""
-    url = "https://api.dmarket.com/marketplace-api/v1/market-items"
+    """Fetches the 5 lowest key prices from DMarket API and takes the highest among them to eliminate outliers."""
+    url = "https://api.dmarket.com/exchange/v1/market/items/v2"
     params = {
+        "title": "mann co. supply crate key",
+        "orderBy": "price",
+        "orderDir": "asc",
+        "isLoggedIn": "false",
         "gameId": "tf2",
-        "title": "Mann Co. Supply Crate Key",
-        "limit": 1,
-        "currency": "USD"
+        "pageSize": "20",
+        "side": "market",
+        "currency": "USD",
+        "platform": "browser"
     }
     headers = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"}
     try:
@@ -101,16 +106,23 @@ async def _fetch_dmarket_api() -> float | None:
             res = await client.get(url, params=params, headers=headers)
             if res.status_code == 200:
                 data = res.json()
-                objects = data.get("objects", [])
-                if objects:
-                    price_usd = objects[0].get("price", {}).get("USD", "")
-                    if price_usd:
-                        val = float(price_usd)
-                        if val > 50:
-                            val = val / 100.0
-                        return round(val, 2)
-    except Exception:
-        pass
+                offers = data.get("offers", [])
+                prices = []
+                for offer in offers:
+                    if "priceCents" in offer:
+                        prices.append(round(offer["priceCents"] / 100.0, 2))
+                    elif "price" in offer and "USD" in offer["price"]:
+                        v = float(offer["price"]["USD"])
+                        if v > 50:
+                            v /= 100.0
+                        prices.append(round(v, 2))
+                if prices:
+                    sorted_prices = sorted(prices)
+                    least_5 = sorted_prices[:5]
+                    selected_price = max(least_5)
+                    return selected_price
+    except Exception as e:
+        print(f"[!] DMarket API fetch notice: {e}")
     return None
 
 async def _scrape_crawlee(currency_id: int = 18) -> dict:
@@ -168,12 +180,16 @@ async def _scrape_crawlee(currency_id: int = 18) -> dict:
                 }''')
                 await page.wait_for_timeout(3000)
 
-                elem = await page.wait_for_selector("asset-card-price, .c-assetCard__price, [class*='assetCard'] [class*='price'], .price-value", timeout=10000)
-                if elem:
+                elements = await page.query_selector_all("asset-card-price, .c-assetCard__price, [class*='assetCard'] [class*='price'], .price-value")
+                scraped_dmarket_prices = []
+                for elem in elements:
                     text = await elem.inner_text()
                     match = re.search(r"\$?(\d+\.\d{2})", text)
                     if match:
-                        scraped['dmarket_usd'] = float(match.group(1))
+                        scraped_dmarket_prices.append(float(match.group(1)))
+                if scraped_dmarket_prices:
+                    least_5 = sorted(scraped_dmarket_prices)[:5]
+                    scraped['dmarket_usd'] = max(least_5)
             except Exception as err:
                 print(f"[!] DMarket crawl notice: {err}")
 
@@ -211,14 +227,22 @@ def fetch_live_prices(currency_id: int = 18) -> dict:
     except Exception as e:
         print(f"[!] Could not fetch Steam live price: {e}. Using fallback {prices['steam_uah']}.")
 
-    # 2. Crawlee Playwright scrape for MannCo, DMarket, and Steam
+    # 2. Fetch DMarket price via API (takes highest of 5 lowest to avoid outliers)
+    try:
+        dmarket_val = asyncio.run(_fetch_dmarket_api())
+        if dmarket_val is not None:
+            prices['dmarket_usd'] = dmarket_val
+    except Exception as e:
+        print(f"[!] Could not fetch DMarket API live price: {e}.")
+
+    # 3. Crawlee Playwright scrape for MannCo, DMarket (if needed), and Steam
     try:
         crawlee_results = asyncio.run(_scrape_crawlee(currency_id=currency_id))
         if 'mannco_usd' in crawlee_results:
             prices['mannco_usd'] = crawlee_results['mannco_usd']
-        if 'dmarket_usd' in crawlee_results:
+        if 'dmarket_usd' in crawlee_results and prices['dmarket_usd'] == DEFAULT_PRICES['dmarket_usd']:
             prices['dmarket_usd'] = crawlee_results['dmarket_usd']
-        if 'steam_uah' in crawlee_results:
+        if 'steam_uah' in crawlee_results and prices['steam_uah'] == DEFAULT_PRICES['steam_uah']:
             prices['steam_uah'] = crawlee_results['steam_uah']
     except Exception as e:
         print(f"[!] Crawlee scrape notice: {e}. Using fallback prices where needed.")
