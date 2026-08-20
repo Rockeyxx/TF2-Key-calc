@@ -99,13 +99,31 @@ if __name__ == "__main__":
                 break
             elif flagway == "0":
                 try:
-                    current_steam_balance= float(input(f"Enter your steam balance ({curr_code})"))
-                    gameprice = float(input(f"Enter the game price ({curr_code}): "))
+                    bal_str = input(f"Enter your current Steam balance ({curr_code}) [default: 0]: ").strip()
+                    current_steam_balance = float(bal_str) if bal_str else 0.0
+                    if current_steam_balance < 0:
+                        print("[!] Steam balance cannot be negative. Resetting to 0.")
+                        current_steam_balance = 0.0
+
+                    game_str = input(f"Enter the game price ({curr_code}): ").strip()
+                    gameprice = float(game_str)
+                    if gameprice <= 0:
+                        print("[!] Game price must be greater than 0.\n")
+                        continue
+
                     net_steam_per_key = TF2KEY_PRICE / STEAM_FEE
-                    NumberOfKeys = math.ceil((gameprice-current_steam_balance) / net_steam_per_key) 
+                    needed_amount = gameprice - current_steam_balance
+
+                    if needed_amount <= 0:
+                        print(f"\n[+] Your current Steam balance ({current_steam_balance} {curr_code}) already covers the game price ({gameprice} {curr_code})!")
+                        print("    No additional TF2 keys need to be purchased.\n")
+                        continue
+
+                    NumberOfKeys = math.ceil(needed_amount / net_steam_per_key) 
                     mannco_sar, mannco_usd, mannco_steam = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
                     dm_sar, dm_usd, dm_steam = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
-                    print(f"\nKeys needed: {NumberOfKeys}")
+                    print(f"\nRemaining balance needed: {round(needed_amount, 2)} {curr_code}")
+                    print(f"Keys needed: {NumberOfKeys}")
                     print(f"Mannco (Key price: ${mannco_key_usd}): {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_steam} {curr_code}")
                     print(f"DMMarket (Key price: ${dmarket_key_usd}): {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_steam} {curr_code}\n")
                 except ValueError:

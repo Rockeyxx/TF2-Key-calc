@@ -22,7 +22,7 @@ A Python utility and web scraper designed for Team Fortress 2 (TF2) key trading 
 
 ## Quick Start (One-Line Run)
 
-Run the calculator directly in your terminal with a single command (automatically sets up virtual environment & dependencies):
+Run the calculator directly in your terminal with a single command (automatically sets up or updates the environment & dependencies):
 
 ### Linux / macOS:
 
@@ -40,11 +40,16 @@ curl -sSL https://raw.githubusercontent.com/Rockeyxx/TF2-Key-calc/main/run.sh | 
 iwr -useb https://raw.githubusercontent.com/Rockeyxx/TF2-Key-calc/main/run.ps1 | iex
 ```
 
+> **Interactive Menu:** Running the command presents an interactive menu with choices:
+> 1. `(1) Run Calculator [Default]`
+> 2. `(2) Update to Latest Version`
+> 3. `(3) Uninstall / Clean up`
+
 ### Uninstalling / Cleanup
 
-To clean up the virtual environment, cached prices, and storage:
+You can either select option `(3)` in the interactive menu, or pass direct flags:
 
-- **Linux / macOS:** `./run.sh --uninstall`
+- **Linux / macOS:** `./run.sh --uninstall` (or `bash <(curl -sSL https://raw.githubusercontent.com/Rockeyxx/TF2-Key-calc/main/run.sh) --uninstall`)
 - **Windows (PowerShell):** `.\run.ps1 -Uninstall`
 
 ---
