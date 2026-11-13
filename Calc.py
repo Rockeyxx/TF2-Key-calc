@@ -18,10 +18,17 @@ def _ensure_interactive_stdin():
 TF2KEY_PRICE = 99 #get_steam_price_uah() #UKRAININ 
 STEAM_FEE = 1.15
 
+# MannCo Card / Google Pay checkout fee (stripe_credit / stripe_google_pay at
+# https://mannco.store/api/payments/methods): 3.9% + $0.40, in basis points / cents.
+MANNCO_PERCENT_FEE_BPS = 390
+MANNCO_STATIC_FEE_CENTS = 40
+
 def calculate_mannco_price(number_of_keys=1, tf2key_price=TF2KEY_PRICE, steam_fee=STEAM_FEE, usd_to_sar=USD_TO_SAR, key_price_usd=1.73):
-    """Calculates total price for MannCo keys and returns a tuple (total_sar, total_usd, total_uah)."""
-    fee_usd = round(0.06275 * number_of_keys + 0.305, 2)
-    total_usd = round(fee_usd + key_price_usd * number_of_keys, 2)
+    """Calculates total price for MannCo keys (paid by Card / Google Pay) and returns a tuple (total_sar, total_usd, total_uah)."""
+    subtotal_cents = round(key_price_usd * 100) * number_of_keys
+    # Same as MannCo's Math.round(subtotal * percent / 10000 + static), rounding half up
+    fee_cents = (subtotal_cents * MANNCO_PERCENT_FEE_BPS + MANNCO_STATIC_FEE_CENTS * 10000 + 5000) // 10000
+    total_usd = (subtotal_cents + fee_cents) / 100
     total_sar = round(total_usd * usd_to_sar, 2)
     total_uah = round((tf2key_price * number_of_keys) / steam_fee, 2)
     return (total_sar, total_usd, total_uah)
@@ -124,8 +131,8 @@ if __name__ == "__main__":
                     dm_sar, dm_usd, dm_steam = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
                     print(f"\nRemaining balance needed: {round(needed_amount, 2)} {curr_code}")
                     print(f"Keys needed: {NumberOfKeys}")
-                    print(f"Mannco (Key price: ${mannco_key_usd}): {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_steam} {curr_code}")
-                    print(f"DMMarket (Key price: ${dmarket_key_usd}): {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_steam} {curr_code}\n")
+                    print(f"Mannco (Key price: ${mannco_key_usd}, Card/Google Pay):\n Pay: {mannco_sar} SAR (${mannco_usd})\n Steam wallet after selling: {mannco_steam} {curr_code}")
+                    print(f"DMMarket (Key price: ${dmarket_key_usd}):\n Pay: {dm_sar} SAR (${dm_usd})\n Steam wallet after selling: {dm_steam} {curr_code}\n")
                 except ValueError:
                     print("[!] Invalid price input. Please enter a valid number.\n")
             elif flagway == "1":
@@ -133,8 +140,8 @@ if __name__ == "__main__":
                     NumberOfKeys = int(input("Enter the number of keys: "))
                     mannco_sar, mannco_usd, mannco_steam = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
                     dm_sar, dm_usd, dm_steam = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
-                    print(f"\nMannco (Key price: ${mannco_key_usd}): {mannco_sar} SAR | {mannco_usd} USD |\n you will get in steam account {mannco_steam} {curr_code}")
-                    print(f"DMMarket (Key price: ${dmarket_key_usd}): {dm_sar} SAR | {dm_usd} USD |\n you will get in steam account {dm_steam} {curr_code}\n")
+                    print(f"\nMannco (Key price: ${mannco_key_usd}, Card/Google Pay):\n Pay: {mannco_sar} SAR (${mannco_usd})\n Steam wallet after selling: {mannco_steam} {curr_code}")
+                    print(f"DMMarket (Key price: ${dmarket_key_usd}):\n Pay: {dm_sar} SAR (${dm_usd})\n Steam wallet after selling: {dm_steam} {curr_code}\n")
                 except ValueError:
                     print("[!] Invalid number of keys. Please enter a valid integer.\n")
             else:
