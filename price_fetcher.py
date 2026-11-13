@@ -18,8 +18,6 @@ DEFAULT_PRICES = {
     'mannco_usd': 1.73,
     'dmarket_usd': 1.63,
     'sih_usd': 1.70,
-    'waxpeer_usd': 1.74,
-    'usd_eur': 0.90,  # USD -> EUR rate (Waxpeer charges cards in EUR)
     'steam_uah': 99.0
 }
 
@@ -150,19 +148,8 @@ async def _fetch_sih_api() -> float | None:
         print(f"[!] SIH Market API fetch notice: {e}")
     return None
 
-async def _fetch_usd_eur() -> float | None:
-    """Fetches the live USD -> EUR exchange rate (Waxpeer charges cards in EUR)."""
-    try:
-        async with httpx.AsyncClient(timeout=8.0) as client:
-            res = await client.get("https://open.er-api.com/v6/latest/USD")
-            if res.status_code == 200:
-                return float(res.json()["rates"]["EUR"])
-    except Exception as e:
-        print(f"[!] Exchange rate fetch notice: {e}")
-    return None
-
 async def _scrape_crawlee(currency_id: int = 18) -> dict:
-    """Uses Crawlee PlaywrightCrawler to extract live prices from MannCo, DMarket, Waxpeer, and Steam."""
+    """Uses Crawlee PlaywrightCrawler to extract live prices from MannCo, DMarket, and Steam."""
     if not CRAWLEE_AVAILABLE:
         print("[!] Notice: Crawlee module not installed in current Python environment. Using fallback prices.")
         return {}
@@ -170,7 +157,7 @@ async def _scrape_crawlee(currency_id: int = 18) -> dict:
     scraped = {}
 
     crawler = PlaywrightCrawler(
-        max_requests_per_crawl=4,
+        max_requests_per_crawl=3,
         request_handler_timeout=timedelta(seconds=15),
         headless=True,
     )
@@ -229,24 +216,6 @@ async def _scrape_crawlee(currency_id: int = 18) -> dict:
             except Exception as err:
                 print(f"[!] DMarket crawl notice: {err}")
 
-        elif "waxpeer.com" in url:
-            try:
-                # Sale orders are listed cheapest first: "Mann Co. Supply Crate Key\n$1.65\n..."
-                await page.wait_for_function(
-                    r"/Sale orders[\s\S]*Supply Crate Key\s+\$\d+\.\d{2}/.test(document.body.innerText)",
-                    timeout=10000,
-                )
-                body = await page.inner_text("body")
-                start = body.find("Sale orders")
-                end = body.find("Similar", start)
-                section = body[start:end if end != -1 else None]
-                waxpeer_prices = [float(p) for p in re.findall(r"Mann Co\. Supply Crate Key\s+\$(\d+\.\d{2})", section)]
-                if waxpeer_prices:
-                    # Highest of the 5 lowest, like DMarket, since the cheapest listings are few
-                    scraped['waxpeer_usd'] = max(sorted(waxpeer_prices)[:5])
-            except Exception as err:
-                print(f"[!] Waxpeer crawl notice: {err}")
-
         elif "steamcommunity.com" in url or "itemordershistogram" in url:
             try:
                 body_content = await page.content()
@@ -263,7 +232,6 @@ async def _scrape_crawlee(currency_id: int = 18) -> dict:
     await crawler.run([
         "https://mannco.store/item/440-mann-co-supply-crate-key",
         "https://dmarket.com/ingame-items/item-list/tf2-skins?title=mann%20co.%20supply%20crate%20key",
-        "https://waxpeer.com/tf2/mann-co-supply-crate-key/item",
         f"https://steamcommunity.com/market/itemordershistogram?country=US&language=english&currency={currency_id}&item_nameid=1"
     ])
 
@@ -273,7 +241,7 @@ def fetch_live_prices(currency_id: int = 18) -> dict:
     """Fetches live market prices with fallbacks on failure."""
     prices = fetch_fallback_prices()
 
-    print("[*] Fetching live TF2 key prices (Steam, MannCo, DMarket, SIH, Waxpeer)...")
+    print("[*] Fetching live TF2 key prices (Steam, MannCo, DMarket, SIH)...")
 
     # 1. Fetch Steam Market price via httpx API
     try:
@@ -298,21 +266,11 @@ def fetch_live_prices(currency_id: int = 18) -> dict:
     except Exception as e:
         print(f"[!] Could not fetch SIH Market API live price: {e}.")
 
-    # 4. Fetch USD -> EUR rate (Waxpeer charges cards in EUR)
-    try:
-        usd_eur = asyncio.run(_fetch_usd_eur())
-        if usd_eur is not None:
-            prices['usd_eur'] = usd_eur
-    except Exception as e:
-        print(f"[!] Could not fetch exchange rate: {e}.")
-
-    # 5. Crawlee Playwright scrape for MannCo, Waxpeer, DMarket (if needed), and Steam
+    # 4. Crawlee Playwright scrape for MannCo, DMarket (if needed), and Steam
     try:
         crawlee_results = asyncio.run(_scrape_crawlee(currency_id=currency_id))
         if 'mannco_usd' in crawlee_results:
             prices['mannco_usd'] = crawlee_results['mannco_usd']
-        if 'waxpeer_usd' in crawlee_results:
-            prices['waxpeer_usd'] = crawlee_results['waxpeer_usd']
         if 'dmarket_usd' in crawlee_results and prices['dmarket_usd'] == DEFAULT_PRICES['dmarket_usd']:
             prices['dmarket_usd'] = crawlee_results['dmarket_usd']
         if 'steam_uah' in crawlee_results and prices['steam_uah'] == DEFAULT_PRICES['steam_uah']:

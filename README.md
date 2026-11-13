@@ -1,13 +1,13 @@
 # TF2 Key Price Calculator & Live Scraper
 
-A Python utility and web scraper designed for Team Fortress 2 (TF2) key trading and Steam wallet conversions. It calculates total purchase costs across key marketplaces (**MannCo.store**, **DMarket**, **SIH Market** and **Waxpeer**) in **USD** and **SAR (Saudi Riyal)**, and computes the exact **UAH (Ukrainian Hryvnia)** balance you receive in your Steam wallet after Steam market transaction fees.
+A Python utility and web scraper designed for Team Fortress 2 (TF2) key trading and Steam wallet conversions. It calculates total purchase costs across key marketplaces (**MannCo.store**, **DMarket** and **SIH Market**) in **USD** and **SAR (Saudi Riyal)**, and computes the exact **UAH (Ukrainian Hryvnia)** balance you receive in your Steam wallet after Steam market transaction fees.
 
 ---
 
 ## Features
 
 - **Automated Live Web Scraping (`Crawlee` & `Playwright`)**:
-- Automatically fetches real-time TF2 key prices from **MannCo.store**, **DMarket**, **SIH Market** and **Waxpeer** (sorted by _Lowest Price_).
+- Automatically fetches real-time TF2 key prices from **MannCo.store**, **DMarket** and **SIH Market** (sorted by _Lowest Price_).
 - Fetches live key market prices in Ukrainian Hryvnia directly from **Steam Community Market**.
 - Includes robust offline fallbacks if a network error occurs.
 - **Dual Calculation Modes**:
@@ -17,7 +17,6 @@ A Python utility and web scraper designed for Team Fortress 2 (TF2) key trading 
 - **MannCo.store**: Includes the Google Pay / Apple Pay checkout fee (3.9% + $0.40, same as Card).
 - **DMarket**: Includes the Google Pay / Apple Pay deposit fee (2.35% + $0.25, same as Card, added on top so the fee is covered).
 - **SIH Market**: Includes the Card deposit fee (3% + $0.25, minimum $1 deposit); SIH has no Google Pay / Apple Pay option.
-- **Waxpeer**: Includes the Card deposit fee (3.9% + $0.35, added on top, minimum $5 after fees). The card is charged in EUR, so the SAR price is converted from the EUR charge using the live exchange rate.
 - **Steam Market**: Deducts Steam's 15% transaction fee ($1.15$ divisor) to output exact wallet gain in UAH.
 
 ---
@@ -87,9 +86,9 @@ python Calc.py
 ### Interactive Output Example:
 
 ```text
-[*] Fetching live TF2 key prices (Steam, MannCo, DMarket, SIH, Waxpeer)...
+[*] Fetching live TF2 key prices (Steam, MannCo, DMarket, SIH)...
 
-[+] Active Prices Loaded: MannCo $1.77 | DMMarket $1.75 | SIH $1.703 | Waxpeer $1.74 | Steam 100.0 UAH
+[+] Active Prices Loaded: MannCo $1.77 | DMMarket $1.75 | SIH $1.703 | Steam 100.0 UAH
 
 Choose (0) for game price (1) for keys number: 0
 Enter the game price: 330
@@ -103,9 +102,6 @@ DMMarket (Key price: $1.75, Google Pay/Apple Pay):
  Steam wallet after selling: 347.83 UAH
 SIH Market (Key price: $1.703, Card):
  Pay: 27.38 SAR ($7.3)
- Steam wallet after selling: 347.83 UAH
-Waxpeer (Key price: $1.74, Card charged in EUR, min $5 deposit):
- Pay: 28.56 SAR ($7.61 ≈ €6.88)
  Steam wallet after selling: 347.83 UAH
 ```
 ---
