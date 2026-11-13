@@ -21,6 +21,15 @@ A Python utility and web scraper designed for Team Fortress 2 (TF2) key trading 
 
 ---
 
+## Download
+
+Grab a launcher from the [latest release](https://github.com/Rockeyxx/TF2-Key-calc/releases/latest). Each one sets up Python dependencies and pulls the latest calculator from `main` every time it runs.
+
+- **Windows:** download `run.bat` and double-click it (Python 3 must be installed).
+- **Linux / macOS:** download `run.sh` and run `bash run.sh` in the folder you saved it to.
+
+---
+
 ## Quick Start (One-Line Run)
 
 Run the calculator directly in your terminal with a single command (automatically sets up or updates the environment & dependencies):
