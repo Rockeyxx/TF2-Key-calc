@@ -6,3 +6,4 @@ __pycache__/
 storage/
 docs/*
 prices_cache.json
+.vibe-wise/
