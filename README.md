@@ -1,13 +1,13 @@
 # TF2 Key Price Calculator & Live Scraper
 
-A Python utility and web scraper designed for Team Fortress 2 (TF2) key trading and Steam wallet conversions. It calculates total purchase costs across key marketplaces (**MannCo.store** and **DMarket**) in **USD** and **SAR (Saudi Riyal)**, and computes the exact **UAH (Ukrainian Hryvnia)** balance you receive in your Steam wallet after Steam market transaction fees.
+A Python utility and web scraper designed for Team Fortress 2 (TF2) key trading and Steam wallet conversions. It calculates total purchase costs across key marketplaces (**MannCo.store**, **DMarket** and **SIH Market**) in **USD** and **SAR (Saudi Riyal)**, and computes the exact **UAH (Ukrainian Hryvnia)** balance you receive in your Steam wallet after Steam market transaction fees.
 
 ---
 
 ## Features
 
 - **Automated Live Web Scraping (`Crawlee` & `Playwright`)**:
-- Automatically fetches real-time TF2 key prices from **MannCo.store** and **DMarket** (sorted by _Lowest Price_).
+- Automatically fetches real-time TF2 key prices from **MannCo.store**, **DMarket** and **SIH Market** (sorted by _Lowest Price_).
 - Fetches live key market prices in Ukrainian Hryvnia directly from **Steam Community Market**.
 - Includes robust offline fallbacks if a network error occurs.
 - **Dual Calculation Modes**:
@@ -15,7 +15,8 @@ A Python utility and web scraper designed for Team Fortress 2 (TF2) key trading 
   - **By Key Quantity**: Input the number of keys you want to buy to get a full cost breakdown.
 - **Accurate Marketplace Fee Modeling**:
 - **MannCo.store**: Includes the Card / Google Pay checkout fee (3.9% + $0.40).
-- **DMarket**: Includes percentage fee model.
+- **DMarket**: Includes the Google Pay deposit fee (2.35% + $0.25, added on top so the fee is covered).
+- **SIH Market**: Includes the Card deposit fee (3% + $0.25, minimum $1 deposit); SIH has no Google Pay option.
 - **Steam Market**: Deducts Steam's 15% transaction fee ($1.15$ divisor) to output exact wallet gain in UAH.
 
 ---
@@ -85,9 +86,9 @@ python Calc.py
 ### Interactive Output Example:
 
 ```text
-[*] Fetching live TF2 key prices (Steam, MannCo, DMarket)...
+[*] Fetching live TF2 key prices (Steam, MannCo, DMarket, SIH)...
 
-[+] Active Prices Loaded: MannCo $1.77 | DMMarket $1.75 | Steam 100.0 UAH
+[+] Active Prices Loaded: MannCo $1.77 | DMMarket $1.75 | SIH $1.703 | Steam 100.0 UAH
 
 Choose (0) for game price (1) for keys number: 0
 Enter the game price: 330
@@ -96,8 +97,11 @@ Keys needed: 4
 Mannco (Key price: $1.77, Card/Google Pay):
  Pay: 29.1 SAR ($7.76)
  Steam wallet after selling: 347.83 UAH
-DMMarket (Key price: $1.75):
- Pay: 27.79 SAR ($7.41)
+DMMarket (Key price: $1.75, Google Pay):
+ Pay: 27.82 SAR ($7.42)
+ Steam wallet after selling: 347.83 UAH
+SIH Market (Key price: $1.703, Card):
+ Pay: 27.38 SAR ($7.3)
  Steam wallet after selling: 347.83 UAH
 ```
 ---

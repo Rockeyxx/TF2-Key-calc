@@ -33,11 +33,32 @@ def calculate_mannco_price(number_of_keys=1, tf2key_price=TF2KEY_PRICE, steam_fe
     total_uah = round((tf2key_price * number_of_keys) / steam_fee, 2)
     return (total_sar, total_usd, total_uah)
 
+# DMarket Google Pay deposit fee (shown in DMarket's deposit window): 2.35% + $0.25.
+# DMarket grosses it up so the fee is covered: total = (amount + fixed) / (1 - percent).
+DMARKET_PERCENT_FEE = 0.0235
+DMARKET_FIXED_FEE = 0.25
+
 def calculate_dmmarket_price(number_of_keys=1, tf2key_price=TF2KEY_PRICE, steam_fee=STEAM_FEE, usd_to_sar=USD_TO_SAR, key_price_usd=1.63):
-    """Calculates total price for DMMarket keys and returns a tuple (total_sar, total_usd, total_uah)."""
+    """Calculates total price for DMMarket keys (deposit by Google Pay) and returns a tuple (total_sar, total_usd, total_uah)."""
     price_without_fee = number_of_keys * key_price_usd
-    fee_usd = round((2.35 / 100 * price_without_fee) + 0.25, 2)
-    total_usd = round(price_without_fee + fee_usd, 2)
+    total_usd = round((price_without_fee + DMARKET_FIXED_FEE) / (1 - DMARKET_PERCENT_FEE), 2)
+    total_sar = round(total_usd * usd_to_sar, 2)
+    total_uah = round((tf2key_price * number_of_keys) / steam_fee, 2)
+    return (total_sar, total_usd, total_uah)
+
+# SIH Market Card deposit fee (SIH has no Google Pay option): 3% + $0.25, minimum deposit $1.
+# From sih.app's deposit page code: total = (deposit * 1.001, to cents) / (1 - percent) + fixed, rounded up to the cent.
+SIH_PERCENT_FEE = 0.03
+SIH_FIXED_FEE = 0.25
+SIH_MIN_DEPOSIT = 1.00
+
+def calculate_sih_price(number_of_keys=1, tf2key_price=TF2KEY_PRICE, steam_fee=STEAM_FEE, usd_to_sar=USD_TO_SAR, key_price_usd=1.70):
+    """Calculates total price for SIH Market keys (deposit by Card) and returns a tuple (total_sar, total_usd, total_uah)."""
+    # SIH prices have 3 decimals; the deposit is rounded up to whole cents
+    deposit = max(math.ceil(round(key_price_usd * number_of_keys * 100, 6)) / 100, SIH_MIN_DEPOSIT)
+    charged = round(deposit * 1.001, 2)
+    total = charged / (1 - SIH_PERCENT_FEE) + SIH_FIXED_FEE
+    total_usd = math.ceil(round(total * 100, 6)) / 100
     total_sar = round(total_usd * usd_to_sar, 2)
     total_uah = round((tf2key_price * number_of_keys) / steam_fee, 2)
     return (total_sar, total_usd, total_uah)
@@ -78,11 +99,12 @@ if __name__ == "__main__":
         cached_data = load_cached_prices()
         use_cache = False
 
-        if cached_data and cached_data.get("currency_id") == curr_id:
+        # Caches saved before SIH was added have no sih_usd, so they are skipped and prices re-fetched
+        if cached_data and cached_data.get("currency_id") == curr_id and "sih_usd" in cached_data.get("prices", {}):
             cache_ts = cached_data.get("timestamp", "unknown time")
             cache_prices = cached_data.get("prices", {})
             print(f"\n[i] Found cached prices from {cache_ts}:")
-            print(f"    MannCo: ${cache_prices.get('mannco_usd')} | DMarket: ${cache_prices.get('dmarket_usd')} | Steam: {cache_prices.get('steam_uah')} {curr_code}")
+            print(f"    MannCo: ${cache_prices.get('mannco_usd')} | DMarket: ${cache_prices.get('dmarket_usd')} | SIH: ${cache_prices.get('sih_usd')} | Steam: {cache_prices.get('steam_uah')} {curr_code}")
             refetch_ans = input("Re-fetch live prices from web? (y/N): ").strip().lower()
             if refetch_ans not in ["y", "yes"]:
                 use_cache = True
@@ -94,10 +116,11 @@ if __name__ == "__main__":
 
         mannco_key_usd = live_prices['mannco_usd']
         dmarket_key_usd = live_prices['dmarket_usd']
+        sih_key_usd = live_prices['sih_usd']
         steam_key_price = live_prices['steam_uah']
         TF2KEY_PRICE = steam_key_price
 
-        print(f"\n[+] Active Prices Loaded: MannCo ${mannco_key_usd} | DMMarket ${dmarket_key_usd} | Steam {steam_key_price} {curr_code}\n")
+        print(f"\n[+] Active Prices Loaded: MannCo ${mannco_key_usd} | DMMarket ${dmarket_key_usd} | SIH ${sih_key_usd} | Steam {steam_key_price} {curr_code}\n")
 
         while True:
             flagway = input("Choose (0) for game price (1) for keys number (q to quit): ").strip().lower()
@@ -129,10 +152,12 @@ if __name__ == "__main__":
                     NumberOfKeys = math.ceil(needed_amount / net_steam_per_key) 
                     mannco_sar, mannco_usd, mannco_steam = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
                     dm_sar, dm_usd, dm_steam = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
+                    sih_sar, sih_usd, sih_steam = calculate_sih_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=sih_key_usd)
                     print(f"\nRemaining balance needed: {round(needed_amount, 2)} {curr_code}")
                     print(f"Keys needed: {NumberOfKeys}")
                     print(f"Mannco (Key price: ${mannco_key_usd}, Card/Google Pay):\n Pay: {mannco_sar} SAR (${mannco_usd})\n Steam wallet after selling: {mannco_steam} {curr_code}")
-                    print(f"DMMarket (Key price: ${dmarket_key_usd}):\n Pay: {dm_sar} SAR (${dm_usd})\n Steam wallet after selling: {dm_steam} {curr_code}\n")
+                    print(f"DMMarket (Key price: ${dmarket_key_usd}, Google Pay):\n Pay: {dm_sar} SAR (${dm_usd})\n Steam wallet after selling: {dm_steam} {curr_code}")
+                    print(f"SIH Market (Key price: ${sih_key_usd}, Card):\n Pay: {sih_sar} SAR (${sih_usd})\n Steam wallet after selling: {sih_steam} {curr_code}\n")
                 except ValueError:
                     print("[!] Invalid price input. Please enter a valid number.\n")
             elif flagway == "1":
@@ -140,8 +165,10 @@ if __name__ == "__main__":
                     NumberOfKeys = int(input("Enter the number of keys: "))
                     mannco_sar, mannco_usd, mannco_steam = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
                     dm_sar, dm_usd, dm_steam = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
+                    sih_sar, sih_usd, sih_steam = calculate_sih_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=sih_key_usd)
                     print(f"\nMannco (Key price: ${mannco_key_usd}, Card/Google Pay):\n Pay: {mannco_sar} SAR (${mannco_usd})\n Steam wallet after selling: {mannco_steam} {curr_code}")
-                    print(f"DMMarket (Key price: ${dmarket_key_usd}):\n Pay: {dm_sar} SAR (${dm_usd})\n Steam wallet after selling: {dm_steam} {curr_code}\n")
+                    print(f"DMMarket (Key price: ${dmarket_key_usd}, Google Pay):\n Pay: {dm_sar} SAR (${dm_usd})\n Steam wallet after selling: {dm_steam} {curr_code}")
+                    print(f"SIH Market (Key price: ${sih_key_usd}, Card):\n Pay: {sih_sar} SAR (${sih_usd})\n Steam wallet after selling: {sih_steam} {curr_code}\n")
                 except ValueError:
                     print("[!] Invalid number of keys. Please enter a valid integer.\n")
             else:

@@ -17,6 +17,7 @@ CACHE_FILE_PATH = os.path.join(os.path.dirname(__file__), "prices_cache.json")
 DEFAULT_PRICES = {
     'mannco_usd': 1.73,
     'dmarket_usd': 1.63,
+    'sih_usd': 1.70,
     'steam_uah': 99.0
 }
 
@@ -125,6 +126,28 @@ async def _fetch_dmarket_api() -> float | None:
         print(f"[!] DMarket API fetch notice: {e}")
     return None
 
+async def _fetch_sih_api() -> float | None:
+    """Fetches the 5 lowest key prices from SIH Market API (what sih.app/market uses) and takes the highest among them to eliminate outliers."""
+    url = "https://backend.sih.market/api/v2/items"
+    params = {
+        "appId": "440",
+        "search": "Mann Co. Supply Crate Key",
+        "sortBy": "price",  # cheapest first
+        "lang": "en"
+    }
+    headers = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"}
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            res = await client.get(url, params=params, headers=headers)
+            if res.status_code == 200:
+                items = res.json().get("data", [])
+                prices = sorted(i["price"] for i in items if i.get("item") == "Mann Co. Supply Crate Key")
+                if prices:
+                    return max(prices[:5])
+    except Exception as e:
+        print(f"[!] SIH Market API fetch notice: {e}")
+    return None
+
 async def _scrape_crawlee(currency_id: int = 18) -> dict:
     """Uses Crawlee PlaywrightCrawler to extract live prices from MannCo, DMarket, and Steam."""
     if not CRAWLEE_AVAILABLE:
@@ -218,7 +241,7 @@ def fetch_live_prices(currency_id: int = 18) -> dict:
     """Fetches live market prices with fallbacks on failure."""
     prices = fetch_fallback_prices()
 
-    print("[*] Fetching live TF2 key prices (Steam, MannCo, DMarket)...")
+    print("[*] Fetching live TF2 key prices (Steam, MannCo, DMarket, SIH)...")
 
     # 1. Fetch Steam Market price via httpx API
     try:
@@ -235,7 +258,15 @@ def fetch_live_prices(currency_id: int = 18) -> dict:
     except Exception as e:
         print(f"[!] Could not fetch DMarket API live price: {e}.")
 
-    # 3. Crawlee Playwright scrape for MannCo, DMarket (if needed), and Steam
+    # 3. Fetch SIH Market price via API (takes highest of 5 lowest to avoid outliers)
+    try:
+        sih_val = asyncio.run(_fetch_sih_api())
+        if sih_val is not None:
+            prices['sih_usd'] = sih_val
+    except Exception as e:
+        print(f"[!] Could not fetch SIH Market API live price: {e}.")
+
+    # 4. Crawlee Playwright scrape for MannCo, DMarket (if needed), and Steam
     try:
         crawlee_results = asyncio.run(_scrape_crawlee(currency_id=currency_id))
         if 'mannco_usd' in crawlee_results:
