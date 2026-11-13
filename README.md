@@ -14,9 +14,9 @@ A Python utility and web scraper designed for Team Fortress 2 (TF2) key trading 
   - **By Game Price**: Input a game's price in UAH, and it computes how many keys you need to buy and the cost across stores.
   - **By Key Quantity**: Input the number of keys you want to buy to get a full cost breakdown.
 - **Accurate Marketplace Fee Modeling**:
-- **MannCo.store**: Includes the Card / Google Pay checkout fee (3.9% + $0.40).
-- **DMarket**: Includes the Google Pay deposit fee (2.35% + $0.25, added on top so the fee is covered).
-- **SIH Market**: Includes the Card deposit fee (3% + $0.25, minimum $1 deposit); SIH has no Google Pay option.
+- **MannCo.store**: Includes the Google Pay / Apple Pay checkout fee (3.9% + $0.40, same as Card).
+- **DMarket**: Includes the Google Pay / Apple Pay deposit fee (2.35% + $0.25, same as Card, added on top so the fee is covered).
+- **SIH Market**: Includes the Card deposit fee (3% + $0.25, minimum $1 deposit); SIH has no Google Pay / Apple Pay option.
 - **Steam Market**: Deducts Steam's 15% transaction fee ($1.15$ divisor) to output exact wallet gain in UAH.
 
 ---
@@ -94,10 +94,10 @@ Choose (0) for game price (1) for keys number: 0
 Enter the game price: 330
 
 Keys needed: 4
-Mannco (Key price: $1.77, Card/Google Pay):
+Mannco (Key price: $1.77, Google Pay/Apple Pay):
  Pay: 29.1 SAR ($7.76)
  Steam wallet after selling: 347.83 UAH
-DMMarket (Key price: $1.75, Google Pay):
+DMMarket (Key price: $1.75, Google Pay/Apple Pay):
  Pay: 27.82 SAR ($7.42)
  Steam wallet after selling: 347.83 UAH
 SIH Market (Key price: $1.703, Card):

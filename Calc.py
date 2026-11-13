@@ -18,13 +18,13 @@ def _ensure_interactive_stdin():
 TF2KEY_PRICE = 99 #get_steam_price_uah() #UKRAININ 
 STEAM_FEE = 1.15
 
-# MannCo Card / Google Pay checkout fee (stripe_credit / stripe_google_pay at
+# MannCo Card / Google Pay / Apple Pay checkout fee (stripe_credit / stripe_google_pay / stripe_apple_pay at
 # https://mannco.store/api/payments/methods): 3.9% + $0.40, in basis points / cents.
 MANNCO_PERCENT_FEE_BPS = 390
 MANNCO_STATIC_FEE_CENTS = 40
 
 def calculate_mannco_price(number_of_keys=1, tf2key_price=TF2KEY_PRICE, steam_fee=STEAM_FEE, usd_to_sar=USD_TO_SAR, key_price_usd=1.73):
-    """Calculates total price for MannCo keys (paid by Card / Google Pay) and returns a tuple (total_sar, total_usd, total_uah)."""
+    """Calculates total price for MannCo keys (paid by Card / Google Pay / Apple Pay) and returns a tuple (total_sar, total_usd, total_uah)."""
     subtotal_cents = round(key_price_usd * 100) * number_of_keys
     # Same as MannCo's Math.round(subtotal * percent / 10000 + static), rounding half up
     fee_cents = (subtotal_cents * MANNCO_PERCENT_FEE_BPS + MANNCO_STATIC_FEE_CENTS * 10000 + 5000) // 10000
@@ -33,20 +33,20 @@ def calculate_mannco_price(number_of_keys=1, tf2key_price=TF2KEY_PRICE, steam_fe
     total_uah = round((tf2key_price * number_of_keys) / steam_fee, 2)
     return (total_sar, total_usd, total_uah)
 
-# DMarket Google Pay deposit fee (shown in DMarket's deposit window): 2.35% + $0.25.
+# DMarket Google Pay / Apple Pay deposit fee (same for both in DMarket's deposit window): 2.35% + $0.25.
 # DMarket grosses it up so the fee is covered: total = (amount + fixed) / (1 - percent).
 DMARKET_PERCENT_FEE = 0.0235
 DMARKET_FIXED_FEE = 0.25
 
 def calculate_dmmarket_price(number_of_keys=1, tf2key_price=TF2KEY_PRICE, steam_fee=STEAM_FEE, usd_to_sar=USD_TO_SAR, key_price_usd=1.63):
-    """Calculates total price for DMMarket keys (deposit by Google Pay) and returns a tuple (total_sar, total_usd, total_uah)."""
+    """Calculates total price for DMMarket keys (deposit by Google Pay / Apple Pay) and returns a tuple (total_sar, total_usd, total_uah)."""
     price_without_fee = number_of_keys * key_price_usd
     total_usd = round((price_without_fee + DMARKET_FIXED_FEE) / (1 - DMARKET_PERCENT_FEE), 2)
     total_sar = round(total_usd * usd_to_sar, 2)
     total_uah = round((tf2key_price * number_of_keys) / steam_fee, 2)
     return (total_sar, total_usd, total_uah)
 
-# SIH Market Card deposit fee (SIH has no Google Pay option): 3% + $0.25, minimum deposit $1.
+# SIH Market Card deposit fee (SIH has no Google Pay / Apple Pay option): 3% + $0.25, minimum deposit $1.
 # From sih.app's deposit page code: total = (deposit * 1.001, to cents) / (1 - percent) + fixed, rounded up to the cent.
 SIH_PERCENT_FEE = 0.03
 SIH_FIXED_FEE = 0.25
@@ -155,8 +155,8 @@ if __name__ == "__main__":
                     sih_sar, sih_usd, sih_steam = calculate_sih_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=sih_key_usd)
                     print(f"\nRemaining balance needed: {round(needed_amount, 2)} {curr_code}")
                     print(f"Keys needed: {NumberOfKeys}")
-                    print(f"Mannco (Key price: ${mannco_key_usd}, Card/Google Pay):\n Pay: {mannco_sar} SAR (${mannco_usd})\n Steam wallet after selling: {mannco_steam} {curr_code}")
-                    print(f"DMMarket (Key price: ${dmarket_key_usd}, Google Pay):\n Pay: {dm_sar} SAR (${dm_usd})\n Steam wallet after selling: {dm_steam} {curr_code}")
+                    print(f"Mannco (Key price: ${mannco_key_usd}, Google Pay/Apple Pay):\n Pay: {mannco_sar} SAR (${mannco_usd})\n Steam wallet after selling: {mannco_steam} {curr_code}")
+                    print(f"DMMarket (Key price: ${dmarket_key_usd}, Google Pay/Apple Pay):\n Pay: {dm_sar} SAR (${dm_usd})\n Steam wallet after selling: {dm_steam} {curr_code}")
                     print(f"SIH Market (Key price: ${sih_key_usd}, Card):\n Pay: {sih_sar} SAR (${sih_usd})\n Steam wallet after selling: {sih_steam} {curr_code}\n")
                 except ValueError:
                     print("[!] Invalid price input. Please enter a valid number.\n")
@@ -166,8 +166,8 @@ if __name__ == "__main__":
                     mannco_sar, mannco_usd, mannco_steam = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
                     dm_sar, dm_usd, dm_steam = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
                     sih_sar, sih_usd, sih_steam = calculate_sih_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=sih_key_usd)
-                    print(f"\nMannco (Key price: ${mannco_key_usd}, Card/Google Pay):\n Pay: {mannco_sar} SAR (${mannco_usd})\n Steam wallet after selling: {mannco_steam} {curr_code}")
-                    print(f"DMMarket (Key price: ${dmarket_key_usd}, Google Pay):\n Pay: {dm_sar} SAR (${dm_usd})\n Steam wallet after selling: {dm_steam} {curr_code}")
+                    print(f"\nMannco (Key price: ${mannco_key_usd}, Google Pay/Apple Pay):\n Pay: {mannco_sar} SAR (${mannco_usd})\n Steam wallet after selling: {mannco_steam} {curr_code}")
+                    print(f"DMMarket (Key price: ${dmarket_key_usd}, Google Pay/Apple Pay):\n Pay: {dm_sar} SAR (${dm_usd})\n Steam wallet after selling: {dm_steam} {curr_code}")
                     print(f"SIH Market (Key price: ${sih_key_usd}, Card):\n Pay: {sih_sar} SAR (${sih_usd})\n Steam wallet after selling: {sih_steam} {curr_code}\n")
                 except ValueError:
                     print("[!] Invalid number of keys. Please enter a valid integer.\n")
