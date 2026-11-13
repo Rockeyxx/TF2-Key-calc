@@ -62,9 +62,25 @@ def calculate_sih_price(number_of_keys=1, tf2key_price=TF2KEY_PRICE, steam_fee=S
     total_sar = round(total_usd * usd_to_sar, 2)
     total_uah = round((tf2key_price * number_of_keys) / steam_fee, 2)
     return (total_sar, total_usd, total_uah)
+
+# Waxpeer Card deposit fee (no Google Pay / Apple Pay for Saudi Arabia): 3.9% + $0.35, min $5 received after fees.
+# From Waxpeer's deposit window: total = (amount + fixed) / (1 - percent), rounded up to the cent.
+# The card is charged in EUR, so SAR is converted from the EUR charge.
+WAXPEER_PERCENT_FEE = 0.039
+WAXPEER_FIXED_FEE = 0.35
+WAXPEER_MIN_DEPOSIT = 5.00
+
+def calculate_waxpeer_price(number_of_keys=1, tf2key_price=TF2KEY_PRICE, steam_fee=STEAM_FEE, usd_to_sar=USD_TO_SAR, key_price_usd=1.74, usd_to_eur=0.90):
+    """Calculates total price for Waxpeer keys (deposit by Card, charged in EUR) and returns a tuple (total_sar, total_usd, total_uah, total_eur)."""
+    receive = max(round(key_price_usd * number_of_keys, 2), WAXPEER_MIN_DEPOSIT)
+    total_usd = math.ceil(round((receive + WAXPEER_FIXED_FEE) / (1 - WAXPEER_PERCENT_FEE) * 100, 6)) / 100
+    total_eur = round(total_usd * usd_to_eur, 2)
+    total_sar = round(total_eur * usd_to_sar / usd_to_eur, 2)  # EUR -> SAR (SAR is pegged to USD)
+    total_uah = round((tf2key_price * number_of_keys) / steam_fee, 2)
+    return (total_sar, total_usd, total_uah, total_eur)
 # print(f"TF2Key price = {TF2KEY_PRICE}\nYou get in steam = {round(TF2KEY_PRICE * NumberOfKeys / STEAM_FEE,2)} ukrainian\n----------------------------------------")
 
-from price_fetcher import fetch_live_prices, load_cached_prices, save_cached_prices
+from price_fetcher import fetch_live_prices, load_cached_prices, save_cached_prices, DEFAULT_PRICES
 
 #ask the user to input the key number then the price ethier in ryal or ukraiinian then give him the amount of keys and the prices
 
@@ -99,12 +115,12 @@ if __name__ == "__main__":
         cached_data = load_cached_prices()
         use_cache = False
 
-        # Caches saved before SIH was added have no sih_usd, so they are skipped and prices re-fetched
-        if cached_data and cached_data.get("currency_id") == curr_id and "sih_usd" in cached_data.get("prices", {}):
+        # Caches saved before a store was added miss its price, so they are skipped and prices re-fetched
+        if cached_data and cached_data.get("currency_id") == curr_id and all(k in cached_data.get("prices", {}) for k in DEFAULT_PRICES):
             cache_ts = cached_data.get("timestamp", "unknown time")
             cache_prices = cached_data.get("prices", {})
             print(f"\n[i] Found cached prices from {cache_ts}:")
-            print(f"    MannCo: ${cache_prices.get('mannco_usd')} | DMarket: ${cache_prices.get('dmarket_usd')} | SIH: ${cache_prices.get('sih_usd')} | Steam: {cache_prices.get('steam_uah')} {curr_code}")
+            print(f"    MannCo: ${cache_prices.get('mannco_usd')} | DMarket: ${cache_prices.get('dmarket_usd')} | SIH: ${cache_prices.get('sih_usd')} | Waxpeer: ${cache_prices.get('waxpeer_usd')} | Steam: {cache_prices.get('steam_uah')} {curr_code}")
             refetch_ans = input("Re-fetch live prices from web? (y/N): ").strip().lower()
             if refetch_ans not in ["y", "yes"]:
                 use_cache = True
@@ -117,10 +133,12 @@ if __name__ == "__main__":
         mannco_key_usd = live_prices['mannco_usd']
         dmarket_key_usd = live_prices['dmarket_usd']
         sih_key_usd = live_prices['sih_usd']
+        waxpeer_key_usd = live_prices['waxpeer_usd']
+        usd_to_eur = live_prices['usd_eur']
         steam_key_price = live_prices['steam_uah']
         TF2KEY_PRICE = steam_key_price
 
-        print(f"\n[+] Active Prices Loaded: MannCo ${mannco_key_usd} | DMMarket ${dmarket_key_usd} | SIH ${sih_key_usd} | Steam {steam_key_price} {curr_code}\n")
+        print(f"\n[+] Active Prices Loaded: MannCo ${mannco_key_usd} | DMMarket ${dmarket_key_usd} | SIH ${sih_key_usd} | Waxpeer ${waxpeer_key_usd} | Steam {steam_key_price} {curr_code}\n")
 
         while True:
             flagway = input("Choose (0) for game price (1) for keys number (q to quit): ").strip().lower()
@@ -153,11 +171,13 @@ if __name__ == "__main__":
                     mannco_sar, mannco_usd, mannco_steam = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
                     dm_sar, dm_usd, dm_steam = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
                     sih_sar, sih_usd, sih_steam = calculate_sih_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=sih_key_usd)
+                    wax_sar, wax_usd, wax_steam, wax_eur = calculate_waxpeer_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=waxpeer_key_usd, usd_to_eur=usd_to_eur)
                     print(f"\nRemaining balance needed: {round(needed_amount, 2)} {curr_code}")
                     print(f"Keys needed: {NumberOfKeys}")
                     print(f"Mannco (Key price: ${mannco_key_usd}, Google Pay/Apple Pay):\n Pay: {mannco_sar} SAR (${mannco_usd})\n Steam wallet after selling: {mannco_steam} {curr_code}")
                     print(f"DMMarket (Key price: ${dmarket_key_usd}, Google Pay/Apple Pay):\n Pay: {dm_sar} SAR (${dm_usd})\n Steam wallet after selling: {dm_steam} {curr_code}")
-                    print(f"SIH Market (Key price: ${sih_key_usd}, Card):\n Pay: {sih_sar} SAR (${sih_usd})\n Steam wallet after selling: {sih_steam} {curr_code}\n")
+                    print(f"SIH Market (Key price: ${sih_key_usd}, Card):\n Pay: {sih_sar} SAR (${sih_usd})\n Steam wallet after selling: {sih_steam} {curr_code}")
+                    print(f"Waxpeer (Key price: ${waxpeer_key_usd}, Card charged in EUR, min $5 deposit):\n Pay: {wax_sar} SAR (${wax_usd} ≈ €{wax_eur})\n Steam wallet after selling: {wax_steam} {curr_code}\n")
                 except ValueError:
                     print("[!] Invalid price input. Please enter a valid number.\n")
             elif flagway == "1":
@@ -166,9 +186,11 @@ if __name__ == "__main__":
                     mannco_sar, mannco_usd, mannco_steam = calculate_mannco_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=mannco_key_usd)
                     dm_sar, dm_usd, dm_steam = calculate_dmmarket_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=dmarket_key_usd)
                     sih_sar, sih_usd, sih_steam = calculate_sih_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=sih_key_usd)
+                    wax_sar, wax_usd, wax_steam, wax_eur = calculate_waxpeer_price(NumberOfKeys, tf2key_price=TF2KEY_PRICE, key_price_usd=waxpeer_key_usd, usd_to_eur=usd_to_eur)
                     print(f"\nMannco (Key price: ${mannco_key_usd}, Google Pay/Apple Pay):\n Pay: {mannco_sar} SAR (${mannco_usd})\n Steam wallet after selling: {mannco_steam} {curr_code}")
                     print(f"DMMarket (Key price: ${dmarket_key_usd}, Google Pay/Apple Pay):\n Pay: {dm_sar} SAR (${dm_usd})\n Steam wallet after selling: {dm_steam} {curr_code}")
-                    print(f"SIH Market (Key price: ${sih_key_usd}, Card):\n Pay: {sih_sar} SAR (${sih_usd})\n Steam wallet after selling: {sih_steam} {curr_code}\n")
+                    print(f"SIH Market (Key price: ${sih_key_usd}, Card):\n Pay: {sih_sar} SAR (${sih_usd})\n Steam wallet after selling: {sih_steam} {curr_code}")
+                    print(f"Waxpeer (Key price: ${waxpeer_key_usd}, Card charged in EUR, min $5 deposit):\n Pay: {wax_sar} SAR (${wax_usd} ≈ €{wax_eur})\n Steam wallet after selling: {wax_steam} {curr_code}\n")
                 except ValueError:
                     print("[!] Invalid number of keys. Please enter a valid integer.\n")
             else:
